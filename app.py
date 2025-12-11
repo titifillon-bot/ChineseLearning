@@ -75,7 +75,7 @@ def save_session_to_disk():
     except Exception as e:
         st.sidebar.warning(f"Session: impossible d'écrire: {e}")
 
-# --- CSS "FORCE BRUTE" ---
+# --- CSS (CORRECTION HAUTEUR & PLACEMENT) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
@@ -90,15 +90,14 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center; font-weight: 600; color: #6c757d; }
 
 /* --- BARRE DU HAUT (Retour/Fav) --- */
-/* On s'assure qu'ils restent petits */
+/* Pour éviter qu'ils ne soient affectés par le style géant, on les cible spécifiquement */
 div[data-testid="column"] .stButton button {
     width: 100%;
     border-radius: 12px;
     font-weight: 700;
     border-width: 2px;
     padding: 0.5rem 1rem;
-    height: auto !important; 
-    min-height: 0px !important; /* Reset pour le haut */
+    height: auto !important; /* Garder taille normale en haut */
 }
 
 /* --- CARTE --- */
@@ -113,7 +112,7 @@ div[data-testid="column"] .stButton button {
   display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
   overflow: hidden; position: relative; z-index: 1;
   width: 100%; box-sizing: border-box;
-  margin-bottom: 0 !important;
+  margin-bottom: 0 !important; /* Pas de marge en bas pour coller aux boutons */
 }
 .mode-indicator { margin-top: 50px; font-size: 16px; text-transform: uppercase; letter-spacing: 1.5px; color: #adb5bd; font-weight: 700; }
 .content-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 20px; }
@@ -125,22 +124,12 @@ div[data-testid="column"] .stButton button {
 
 /* --- BOUTONS GÉANTS (Révéler / Choix) --- */
 
-/* ZONE RÉVÉLER (Bleu) */
+/* 1. Zone Révéler (Bleu) */
 .area-reveal {
-    margin-top: -10px !important;
-    height: 300px !important; /* Force la zone */
+    margin-top: -10px !important; /* Remonte vers la carte */
 }
-/* Force le conteneur streamlit à être grand */
-.area-reveal div.stButton {
-    height: 300px !important;
-    min-height: 300px !important;
-    width: 100% !important;
-}
-/* Force le bouton lui-même */
-.area-reveal button {
-    height: 300px !important;     
-    min-height: 300px !important;
-    line-height: 300px !important; /* Centre verticalement si texte simple */
+.area-reveal .stButton button {
+    height: 300px !important;      /* FORCE LA HAUTEUR */
     width: 100% !important;
     background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
     color: white !important; 
@@ -148,33 +137,28 @@ div[data-testid="column"] .stButton button {
     font-size: 40px !important; 
     font-weight: 900 !important; 
     border: none !important;
-    display: flex !important; flex-direction: column !important; justify-content: center !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+.area-reveal .stButton button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 25px rgba(0,0,0,0.15) !important;
 }
 
-/* ZONE CHOIX (Rouge / Vert) */
-.area-choices {
-    margin-top: 10px !important;
-}
-/* Force les colonnes à laisser passer la hauteur */
-.area-choices [data-testid="column"] {
-    height: 300px !important;
-}
-/* Force le conteneur de bouton dans les colonnes */
-.area-choices div.stButton {
-    height: 300px !important;
-    min-height: 300px !important;
-}
-/* Force le bouton lui-même */
-.area-choices button {
-    height: 300px !important;      
-    min-height: 300px !important;
+/* 2. Zone Choix (Rouge / Vert) */
+/* Cible les boutons à l'intérieur des colonnes de la zone 'area-choices' */
+.area-choices .stButton button {
+    height: 300px !important;      /* FORCE LA HAUTEUR */
     width: 100% !important;
     font-size: 30px !important;
     font-weight: 800 !important;
     border-radius: 16px !important;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
     border: 3px solid transparent !important;
-    display: flex !important; flex-direction: column !important; justify-content: center !important;
+    margin-top: 10px !important;
 }
+
+/* Bouton "À revoir" (premier bouton trouvé dans area-choices, souvent le rouge si c'est la 1ère colonne) */
+/* Astuce : on cible via CSS spécifique injecté dans le python pour être sûr */
 
 </style>
 """, unsafe_allow_html=True)
@@ -554,6 +538,7 @@ with st.container():
     """, unsafe_allow_html=True)
 
     # 3. Les Boutons d’action GÉANTS
+    # On utilise des DIV wrappers (.area-reveal et .area-choices) pour que le CSS cible bien les boutons à l'intérieur
     if not st.session_state.revealed:
         # WRAPPER POUR RÉVÉLER
         st.markdown('<div class="area-reveal">', unsafe_allow_html=True)
@@ -566,9 +551,10 @@ with st.container():
         # WRAPPER POUR CHOIX
         st.markdown('<div class="area-choices">', unsafe_allow_html=True)
         
-        # Injection CSS spécifique aux couleurs ici
+        # Injection CSS spécifique aux couleurs ici pour être sûr de surcharger
         st.markdown("""
         <style>
+        /* Force couleur Rouge pour colonne 1 de area-choices */
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; 
             color: #ffffff !important;
@@ -576,6 +562,7 @@ with st.container():
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
             background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
         }
+        /* Force couleur Verte pour colonne 2 de area-choices */
         .area-choices div[data-testid="column"]:nth-of-type(2) .stButton button {
             background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important; 
             color: #ffffff !important;
