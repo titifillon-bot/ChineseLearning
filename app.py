@@ -1,4 +1,3 @@
-
 import streamlit as st
 import random
 import json
@@ -122,22 +121,25 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -20px; text-align: center
 .main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
 .main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
 
-/* Révéler (pleine largeur, collé) */
+/* Révéler (pleine largeur, collé) -- HAUTEUR AUGMENTEE */
 .main div:not([data-testid="column"]) .stButton button {
   background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
   color: white !important; border-radius: 0 0 24px 24px !important;
-  margin-top: -24px !important; width: 100% !important; height: 200px !important;
+  margin-top: -24px !important; width: 100% !important; 
+  height: 240px !important; /* <--- MODIF HAUTEUR */
   font-size: 56px !important; font-weight: 900 !important; z-index: 0;
 }
 .main div:not([data-testid="column"]) .stButton button:hover { filter: brightness(1.03); }
 
-/* Rangée des choix */
+/* Rangée des choix -- HAUTEUR AUGMENTEE */
 .choice-row { width: 100%; box-sizing: border-box; }
 .choice-row [data-testid="column"] { padding-left: 0 !important; padding-right: 0 !important; }
 .choice-row [data-testid="column"]:first-of-type { padding-right: 6px !important; }
 .choice-row [data-testid="column"]:last-of-type  { padding-left: 6px !important; }
 .choice-row .stButton button {
-  border-radius: 18px !important; height: 130px !important; font-size: 30px !important; font-weight: 850 !important;
+  border-radius: 18px !important; 
+  height: 180px !important; /* <--- MODIF HAUTEUR */
+  font-size: 30px !important; font-weight: 850 !important;
   margin-top: 22px; border: 3px solid transparent !important;
 }
 .choice-row [data-testid="column"]:nth-of-type(1) .stButton button {
@@ -153,17 +155,28 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -20px; text-align: center
   background: #ffffff !important; color: #27ae60 !important; border: 3px solid #27ae60 !important;
 }
 
-/* --- ÉTOILE FAV EN HAUT-DROITE DE LA CARTE ---
-   Technique: on insère une rangée (fav-row) juste après la carte,
-   superposée grâce à une marge négative et alignée à droite */
+/* --- BOUTONS FLOTTANTS (Top-Left & Top-Right) --- */
 .fav-row { margin-top: -430px; /* superpose ~hauteur carte */ width: 100%; position: relative; z-index: 4; }
 .fav-row [data-testid="column"] { padding: 0 !important; }
+
+/* Style commun pour Back et Fav */
 .fav-row .stButton button {
-  background: #ffd54f !important; color: #8d6e63 !important;
   border-radius: 22px !important; height: 42px !important; font-size: 16px !important; font-weight: 800 !important;
-  padding: 6px 14px !important; border: 2px solid #ffca28 !important; box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+  padding: 6px 14px !important; box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
-.fav-row .stButton button:hover { background: #fff8e1 !important; color: #e65100 !important; border: 2px solid #f9a825 !important; transform: translateY(-2px); }
+
+/* Bouton Fav (Jaune) */
+.fav-button button {
+  background: #ffd54f !important; color: #8d6e63 !important; border: 2px solid #ffca28 !important;
+}
+.fav-button button:hover { background: #fff8e1 !important; color: #e65100 !important; border: 2px solid #f9a825 !important; transform: translateY(-2px); }
+
+/* Bouton Back (Gris/Blanc) */
+.back-button button {
+  background: #ffffff !important; color: #546e7a !important; border: 2px solid #cfd8dc !important;
+}
+.back-button button:hover { background: #eceff1 !important; color: #37474f !important; border: 2px solid #b0bec5 !important; transform: translateY(-2px); }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -247,6 +260,7 @@ if 'total_cards_initial' not in st.session_state: st.session_state.total_cards_i
 if 'favorites' not in st.session_state: st.session_state.favorites = []
 if 'use_favorites_only' not in st.session_state: st.session_state.use_favorites_only = False
 if '_toast_restored_shown' not in st.session_state: st.session_state._toast_restored_shown = False
+if 'history' not in st.session_state: st.session_state.history = []
 
 # silent load at startup (no toast spam)
 load_favorites_from_disk()
@@ -315,7 +329,29 @@ def start_game():
     st.session_state.game_active = True
     st.session_state.revealed = False
     st.session_state.current_card = st.session_state.deck[0] if st.session_state.deck else None
+    st.session_state.history = [] # Reset history
     save_session_to_disk()
+
+# --- UNDO / HISTORY ---
+def push_history():
+    # Sauvegarde l'état actuel avant modification
+    state_snapshot = {
+        'deck': list(st.session_state.deck),
+        'current_card': st.session_state.current_card,
+        'revealed': st.session_state.revealed,
+        'total_cards_initial': st.session_state.total_cards_initial
+    }
+    st.session_state.history.append(state_snapshot)
+
+def undo_last_action():
+    if st.session_state.history:
+        prev = st.session_state.history.pop()
+        st.session_state.deck = prev['deck']
+        st.session_state.current_card = prev['current_card']
+        st.session_state.revealed = prev['revealed']
+        st.session_state.total_cards_initial = prev['total_cards_initial']
+        st.session_state.game_active = True
+        save_session_to_disk()
 
 def next_card():
     st.session_state.revealed = False
@@ -327,10 +363,12 @@ def next_card():
     save_session_to_disk()
 
 def mark_memorized():
+    push_history() # Save for undo
     if st.session_state.deck: st.session_state.deck.pop(0)
     next_card()
 
 def mark_review():
+    push_history() # Save for undo
     if st.session_state.deck:
         card = st.session_state.deck.pop(0)
         st.session_state.deck.append(card)
@@ -499,18 +537,34 @@ with st.container():
 </div>
 """, unsafe_allow_html=True)
 
-    # ⭐ Rangée superposée: bouton en haut-droite de la carte
+    # ⭐ Rangée superposée: Boutons Haut-Gauche et Haut-Droite
     st.markdown('<div class="fav-row">', unsafe_allow_html=True)
-    left, right = st.columns([8, 1])
-    with right:
-        fav_label = "⭐ Ajouter aux favoris" if not is_current_favorite() else "★ Retirer des favoris"
+    c_back, c_spacer, c_fav = st.columns([2, 6, 3])
+    
+    with c_back:
+        # Bouton Retour avec classe spécifique
+        st.markdown('<div class="back-button">', unsafe_allow_html=True)
+        if st.session_state.history:
+            if st.button("⬅️ Retour", key="btn_back", help="Annuler la dernière action"):
+                undo_last_action()
+                rerun()
+        else:
+             st.markdown('<button disabled style="background:#e0e0e0; border:none; color:#a0a0a0; padding:6px 14px; border-radius:22px; cursor:not-allowed;">⬅️ Retour</button>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with c_fav:
+        # Bouton Favoris avec classe spécifique
+        st.markdown('<div class="fav-button">', unsafe_allow_html=True)
+        fav_label = "⭐ Favoris" if not is_current_favorite() else "★ Retirer"
         if st.button(fav_label, key="btn_fav", help="Ajouter/retirer des favoris"):
             toggle_favorite()
             save_session_to_disk()
             rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+        
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Boutons d’action
+    # Boutons d’action (Bas)
     if not st.session_state.revealed:
         if st.button("👁️ Révéler la réponse", key="btn_reveal", use_container_width=True):
             st.session_state.revealed = True
