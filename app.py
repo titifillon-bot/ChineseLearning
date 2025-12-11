@@ -410,4 +410,3 @@ with st.container():
             if st.button("✅ Mémorisé", key="btn_ok"):
                 mark_memorized()
                 rerun()
-```
