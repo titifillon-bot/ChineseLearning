@@ -596,7 +596,7 @@ elif mode == 6:  # Symbole → Pinyin
 
 # --- AFFICHAGE PRINCIPAL ---
 with st.container():
-    # (NOUVEAU) 0. Boutons TOP GÉANTS : Précédent / Favoris (largeur et hauteur comme À revoir / Mémorisé)
+    # 0) Boutons TOP GÉANTS : Précédent / Favoris
     st.markdown('<div class="area-top">', unsafe_allow_html=True)
     c_top_back, c_top_fav = st.columns(2, gap="small")
 
@@ -623,7 +623,7 @@ with st.container():
             rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 1. La Carte
+    # 1) La Carte
     st.markdown(f"""
     <div class="flashcard-content">
       <div class="mode-indicator">{mode_text}</div>
@@ -634,9 +634,8 @@ with st.container():
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. Les Boutons d’action GÉANTS
+    # 2) Bouton révéler ou choix géants
     if not st.session_state.revealed:
-        # WRAPPER POUR RÉVÉLER
         st.markdown('<div class="area-reveal">', unsafe_allow_html=True)
         if st.button("👁️ Révéler la réponse", key="btn_reveal", use_container_width=True):
             st.session_state.revealed = True
@@ -644,13 +643,11 @@ with st.container():
             rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     else:
-        # WRAPPER POUR CHOIX
         st.markdown('<div class="area-choices">', unsafe_allow_html=True)
 
-        # Injection CSS spécifique aux couleurs des boutons Choix
+        # Couleurs spécifiques pour les deux colonnes (rouge / vert)
         st.markdown("""
         <style>
-        /* Force couleur Rouge pour colonne 1 de area-choices */
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
             color: #ffffff !important;
@@ -658,7 +655,6 @@ with st.container():
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
             background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
         }
-        /* Force couleur Verte pour colonne 2 de area-choices */
         .area-choices div[data-testid="column"]:nth-of-type(2) .stButton button {
             background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
             color: #ffffff !important;
@@ -676,7 +672,7 @@ with st.container():
                 save_session_to_disk()
                 rerun()
         with c_ok:
-           ey="btn_ok", use_container_width=True):
+            if st.button("✅ Mémorisé", key="btn_ok", use_container_width=True):
                 mark_memorized()
                 save_session_to_disk()
                 rerun()
