@@ -1,4 +1,7 @@
 
+# app.py — Radicaux Chinois (Streamlit)
+# Boutons colorés avec inversion au survol (Précédent / Favoris / À revoir / Mémorisé)
+
 import streamlit as st
 import random
 import json
@@ -95,16 +98,25 @@ def save_session_to_disk():
     except Exception as e:
         st.sidebar.warning(f"Session: impossible d'écrire: {e}")
 
-# --- CSS ---
+# --- CSS (NOUVEAU: couleurs + inversion au hover) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
 html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 
-/* Variables de hauteur (modifie la valeur pour ajuster la hauteur des boutons top/bas) */
+/* Variables de hauteur */
 :root {
   --top-btn-height: 140px;     /* Hauteur des boutons TOP (Précédent / Favoris) */
   --big-btn-height: 300px;     /* Hauteur des gros boutons Révéler / Choix */
+}
+
+/* PALETTE (modifiable) */
+:root{
+  --prev-1:#8e44ad; --prev-2:#6c3483; --prev-accent:#8e44ad;   /* Précédent */
+  --fav-1:#f39c12; --fav-2:#d68910; --fav-accent:#f39c12;     /* Favoris   */
+  --ko-1:#e74c3c;  --ko-2:#c0392b;  --ko-accent:#e74c3c;      /* À revoir  */
+  --ok-1:#2ecc71;  --ok-2:#27ae60;  --ok-accent:#2ecc71;      /* Mémorisé  */
+  --reveal-1:#3498db; --reveal-2:#2980b9; --reveal-accent:#2980b9; /* Révéler */
 }
 
 /* Layout général */
@@ -118,24 +130,45 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center
 /* --- BARRE DU HAUT (Précédent / Favoris) --- */
 .area-top div[data-testid="column"] {
   display: flex;
-  justify-content: center;    /* Centre le bouton dans sa colonne */
+  justify-content: center;
 }
 .area-top .stButton button {
   height: var(--top-btn-height) !important;
   width: 100% !important;
-  max-width: 420px !important;   /* Limite la largeur du bouton */
+  max-width: 420px !important;
   font-size: 30px !important;
   font-weight: 800 !important;
   border-radius: 16px !important;
   border: 3px solid transparent !important;
   margin-top: 10px !important;
-  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%) !important;
+  transition: background .15s ease, color .15s ease, border-color .15s ease,
+              transform .15s ease, box-shadow .15s ease;
+}
+
+/* TOP: Précédent (colonne 1) */
+.area-top div[data-testid="column"]:nth-of-type(1) .stButton button{
+  background: linear-gradient(135deg, var(--prev-1) 0%, var(--prev-2) 100%) !important;
   color: #ffffff !important;
 }
-.area-top .stButton button:hover {
+.area-top div[data-testid="column"]:nth-of-type(1) .stButton button:hover{
   background: #ffffff !important;
-  color: #7f8c8d !important;
-  border: 3px solid #7f8c8d !important;
+  color: var(--prev-2) !important;
+  border-color: var(--prev-accent) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0,0,0,.12) !important;
+}
+
+/* TOP: Favoris (colonne 2) */
+.area-top div[data-testid="column"]:nth-of-type(2) .stButton button{
+  background: linear-gradient(135deg, var(--fav-1) 0%, var(--fav-2) 100%) !important;
+  color: #ffffff !important;
+}
+.area-top div[data-testid="column"]:nth-of-type(2) .stButton button:hover{
+  background: #ffffff !important;
+  color: var(--fav-2) !important;
+  border-color: var(--fav-accent) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0,0,0,.12) !important;
 }
 
 /* --- CARTE --- */
@@ -165,36 +198,69 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center
 /* 1. Zone Révéler (Bleu) */
 .area-reveal { margin-top: -10px !important; }
 .area-reveal .stButton button {
-    height: var(--big-btn-height) !important;
-    width: 100% !important;
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
-    color: white !important;
-    border-radius: 0 0 24px 24px !important;
-    font-size: 40px !important;
-    font-weight: 900 !important;
-    border: none !important;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+  height: var(--big-btn-height) !important;
+  width: 100% !important;
+  background: linear-gradient(135deg, var(--reveal-1) 0%, var(--reveal-2) 100%) !important;
+  color: white !important;
+  border-radius: 0 0 24px 24px !important;
+  font-size: 40px !important;
+  font-weight: 900 !important;
+  border: 3px solid transparent !important;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+  transition: background .15s ease, color .15s ease, border-color .15s ease,
+              transform .15s ease, box-shadow .15s ease;
 }
 .area-reveal .stButton button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 25px rgba(0,0,0,0.15) !important;
+  background:#ffffff !important;
+  color: var(--reveal-2) !important;
+  border-color: var(--reveal-accent) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 15px 25px rgba(0,0,0,0.15) !important;
 }
 
 /* 2. Zone Choix (Rouge / Vert) */
 .area-choices div[data-testid="column"] {
-    display: flex;
-    justify-content: center;      /* Centre les boutons dans leurs colonnes */
+  display: flex;
+  justify-content: center;
 }
 .area-choices .stButton button {
-    height: var(--big-btn-height) !important;
-    width: 100% !important;
-    max-width: 420px !important;  /* Optionnel : harmoniser largeur avec TOP */
-    font-size: 30px !important;
-    font-weight: 800 !important;
-    border-radius: 16px !important;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    border: 3px solid transparent !important;
-    margin-top: 10px !important;
+  height: var(--big-btn-height) !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  font-size: 30px !important;
+  font-weight: 800 !important;
+  border-radius: 16px !important;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  border: 3px solid transparent !important;
+  margin-top: 10px !important;
+  transition: background .15s ease, color .15s ease, border-color .15s ease,
+              transform .15s ease, box-shadow .15s ease;
+}
+
+/* Couleur Rouge pour colonne 1 */
+.area-choices div[data-testid="column"]:nth-of-type(1) .stButton button {
+  background: linear-gradient(135deg, var(--ko-1) 0%, var(--ko-2) 100%) !important;
+  color: #ffffff !important;
+}
+.area-choices div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
+  background: #ffffff !important;
+  color: var(--ko-2) !important;
+  border-color: var(--ko-accent) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0,0,0,.12) !important;
+}
+
+/* Couleur Verte pour colonne 2 */
+.area-choices div[data-testid="column"]:nth-of-type(2) .stButton button {
+  background: linear-gradient(135deg, var(--ok-1) 0%, var(--ok-2) 100%) !important;
+  color: #ffffff !important;
+}
+.area-choices div[data-testid="column"]:nth-of-type(2) .stButton button:hover {
+  background: #ffffff !important;
+  color: var(--ok-2) !important;
+  border-color: var(--ok-accent) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0,0,0,.12) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -395,12 +461,9 @@ def next_card():
     """Passe à la carte suivante OU déclenche le reset auto si 100% atteint."""
     st.session_state.revealed = False
     if st.session_state.deck:
-        # Il reste des cartes → on passe à la suivante
         st.session_state.current_card = st.session_state.deck[0]
         save_session_to_disk()
     else:
-        # 100% atteint → reset automatique
-        # st.toast("🎉 100% de réussite — réinitialisation…", icon="✅")  # optionnel
         reset_session()
         return
 
@@ -419,12 +482,7 @@ def mark_review():
 
 # --- RESET (ne touche pas aux favoris ni aux cases) ---
 def reset_session():
-    """Réinitialise la session en cours SANS modifier:
-       - le mode Favoris (use_favorites_only)
-       - l'état des checkboxes Séries (chk_serie_*)
-       - l'état des checkboxes Modes (chk_mode_*)
-       - la liste des favoris ou favoris.json
-    """
+    """Réinitialise la session en cours SANS modifier favoris et réglages."""
     st.session_state.deck = []
     st.session_state.current_card = None
     st.session_state.revealed = False
@@ -433,7 +491,7 @@ def reset_session():
     st.session_state.history = []
     st.session_state._toast_restored_shown = False
 
-    # Vide proprement le fichier de session pour repartir sur une base saine
+    # Vide proprement le fichier de session
     try:
         SESSION_FILE.write_text(json.dumps({}, indent=2), encoding="utf-8")
     except Exception as e:
@@ -574,7 +632,6 @@ if not st.session_state.game_active:
     st.stop()
 
 if st.session_state.current_card is None:
-    # Avec le reset auto, on ne devrait plus passer ici.
     st.balloons()
     st.markdown("""
         <div style='text-align: center; padding: 50px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);'>
@@ -672,28 +729,6 @@ with st.container():
     else:
         st.markdown('<div class="area-choices">', unsafe_allow_html=True)
 
-        # Couleurs spécifiques pour les deux colonnes (rouge / vert)
-        st.markdown("""
-        <style>
-        /* Force couleur Rouge pour colonne 1 de area-choices */
-        .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-            color: #ffffff !important;
-        }
-        .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
-            background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
-        }
-        /* Force couleur Verte pour colonne 2 de area-choices */
-        .area-choices div[data-testid="column"]:nth-of-type(2) .stButton button {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
-            color: #ffffff !important;
-        }
-        .area-choices div[data-testid="column"]:nth-of-type(2) .stButton button:hover {
-            background: #ffffff !important; color: #27ae60 !important; border: 3px solid #27ae60 !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
         c_ko, c_ok = st.columns(2, gap="small")
         with c_ko:
             if st.button("❌ À revoir", key="btn_ko", use_container_width=True):
@@ -706,4 +741,3 @@ with st.container():
                 save_session_to_disk()
                 rerun()
 
-        st.markdown('</div>', unsafe_allow_html=True)
