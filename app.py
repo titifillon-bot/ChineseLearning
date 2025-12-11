@@ -22,7 +22,8 @@ def rerun():
 def load_favorites_from_disk():
     if FAV_FILE.exists():
         try:
-            data = json.loads(FAV_FILE.read_text(encoding="utf-8"))
+            txt = FAV_FILE.read_text(encoding="utf-8")
+            data = json.loads(txt or "[]")
             if isinstance(data, list):
                 st.session_state.favorites = data
         except Exception as e:
@@ -41,7 +42,10 @@ def save_favorites_to_disk():
 def load_session_from_disk(show_toast: bool = False):
     if SESSION_FILE.exists():
         try:
-            data = json.loads(SESSION_FILE.read_text(encoding="utf-8"))
+            raw = SESSION_FILE.read_text(encoding="utf-8")
+            data = json.loads(raw or "{}")
+
+            # Deck + états de jeu
             st.session_state.deck = [
                 ((d["char"], d["pinyin"], d["fr"]), d["mode"]) for d in data.get("deck", [])
             ]
@@ -49,15 +53,21 @@ def load_session_from_disk(show_toast: bool = False):
             st.session_state.revealed = bool(data.get("revealed", False))
             st.session_state.game_active = bool(data.get("game_active", False))
             st.session_state.total_cards_initial = int(data.get("total_cards_initial", len(st.session_state.deck)))
-            st.session_state.use_favorites_only = bool(data.get("use_favorites_only", False))
-            # restaure checkboxes
+
+            # ⚠️ Ne PAS écraser la case "Mode Favoris" si la clé n'est pas dans le fichier
+            if "use_favorites_only" in data:
+                st.session_state.use_favorites_only = bool(data["use_favorites_only"])
+
+            # Restaure uniquement ce qui existe dans le fichier
             for k, v in data.get("series_flags", {}).items():
                 st.session_state[k] = bool(v)
             for k, v in data.get("mode_flags", {}).items():
                 st.session_state[k] = bool(v)
+
             if show_toast and not st.session_state.get("_toast_restored_shown", False):
                 st.toast("🧯 Session restaurée", icon="✅")
                 st.session_state._toast_restored_shown = True
+
         except Exception as e:
             st.sidebar.warning(f"Session: impossible de charger: {e}")
 
@@ -614,7 +624,8 @@ with st.container():
         <style>
         /* Force couleur Rouge pour colonne 1 de area-choices */
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b  color: #ffffff !important;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+            color: #ffffff !important;
         }
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
             background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
