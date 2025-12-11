@@ -87,17 +87,21 @@ div[data-testid="stCaptionContainer"] {
 .main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
 
 /* --- Bouton "RÉVÉLER" : même largeur que la carte et collé en bas --- */
-/* ⚠️ Descendant (pas '>') pour contourner les wrappers internes de Streamlit */
 .main div:not([data-testid="column"]) .stButton button {
     background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
     color: white !important;
     border-radius: 0 0 24px 24px !important; /* ferme visuellement la carte */
     margin-top: -24px !important;           /* colle au bas arrondi de la carte */
     width: 100% !important;
-    height: 160px !important;
-    font-size: 45px !important;
+
+    /* >> plus grand */
+    height: 200px !important;
+    font-size: 56px !important;
     font-weight: 900 !important;
     z-index: 0;
+}
+.main div:not([data-testid="column"]) .stButton button:hover {
+    filter: brightness(1.03);
 }
 
 /* --- Zone des deux choix : largeur = carte, très petit écart central --- */
@@ -107,26 +111,41 @@ div[data-testid="stCaptionContainer"] {
 .choice-row [data-testid="column"] {
     padding-left: 0 !important; padding-right: 0 !important;
 }
-.choice-row [data-testid="column"]:first-of-type { padding-right: 4px !important; }  /* ~4px de gap central */
-.choice-row [data-testid="column"]:last-of-type  { padding-left: 4px !important; }
+/* écart central (ajuste ici si besoin) */
+.choice-row [data-testid="column"]:first-of-type { padding-right: 6px !important; }
+.choice-row [data-testid="column"]:last-of-type  { padding-left: 6px !important; }
 
-/* Boutons dans colonnes */
+/* Boutons dans colonnes (>> plus grands & typo plus grosse) */
 .choice-row .stButton button {
-    border-radius: 16px !important;
-    height: 100px !important;
-    font-size: 24px !important;
-    font-weight: 800 !important;
-    margin-top: 20px;
+    border-radius: 18px !important;
+    height: 130px !important;          /* ++ hauteur */
+    font-size: 30px !important;        /* ++ taille police */
+    font-weight: 850 !important;
+    margin-top: 22px;
+    border: 3px solid transparent !important; /* permettra l'effet outline au hover */
 }
 
-/* Couleurs spécifiques */
+/* --- Styles par bouton --- */
+/* À revoir = rouge par défaut / texte blanc */
 .choice-row [data-testid="column"]:nth-of-type(1) .stButton button {
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-    color: white !important;
+    color: #ffffff !important;
 }
+.choice-row [data-testid="column"]:nth-of-type(1) .stButton button:hover {
+    background: #ffffff !important;
+    color: #c0392b !important;
+    border: 3px solid #c0392b !important;
+}
+
+/* Mémorisé = vert par défaut / texte blanc */
 .choice-row [data-testid="column"]:nth-of-type(2) .stButton button {
     background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
-    color: white !important;
+    color: #ffffff !important;
+}
+.choice-row [data-testid="column"]:nth-of-type(2) .stButton button:hover {
+    background: #ffffff !important;
+    color: #27ae60 !important;
+    border: 3px solid #27ae60 !important;
 }
 
 /* Sidebar propre (optionnel) */
