@@ -51,7 +51,6 @@ def load_session_from_disk(show_toast: bool = False):
                 st.session_state[k] = bool(v)
             for k, v in data.get("mode_flags", {}).items():
                 st.session_state[k] = bool(v)
-            # évite le toast répétitif
             if show_toast and not st.session_state.get("_toast_restored_shown", False):
                 st.toast("🧯 Session restaurée", icon="✅")
                 st.session_state._toast_restored_shown = True
@@ -84,34 +83,37 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 
 /* Layout */
 .stApp { background-color: #f0f2f5; }
-.main .block-container { max-width: 900px; padding-top: 2rem; padding-bottom: 5rem; }
+.main .block-container { max-width: 900px; padding-top: 1rem; padding-bottom: 5rem; }
 
 /* Progression */
 .stProgress > div > div > div { height: 10px !important; }
-div[data-testid="stCaptionContainer"] { margin-bottom: -20px; text-align: center; font-weight: 600; color: #6c757d; }
+div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center; font-weight: 600; color: #6c757d; }
 
-/* Carte */
+/* --- CARTE --- */
 .flashcard-content {
   background-color: #ffffff;
   padding: 20px 30px;
   border-radius: 24px 24px 0 0;
   box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
   text-align: center; margin-top: 25px;
-  height: 450px !important;
-  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  /* HAUTEUR FIXE pour garantir l'alignement des boutons flottants */
+  height: 500px !important; 
+  display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
   overflow: hidden; position: relative; z-index: 1;
   width: 100%; box-sizing: border-box;
 }
 
 /* Typo interne */
-.mode-indicator { position: absolute; top: 30px; left: 0; right: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1.5px; color: #adb5bd; font-weight: 700; }
-.content-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
-.huge-char { font-size: 130px; line-height: 1.2; color: #2c3e50; font-weight: 900; margin: 0; }
-.huge-pinyin { font-size: 50px; color: #3498db; font-weight: 700; margin: 5px 0; }
-.huge-fr { font-size: 35px; color: #505c6e; font-weight: 600; margin: 5px 0; }
+.mode-indicator { margin-top: 50px; font-size: 16px; text-transform: uppercase; letter-spacing: 1.5px; color: #adb5bd; font-weight: 700; }
+.content-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 20px; }
+.huge-char { font-size: 110px; line-height: 1.2; color: #2c3e50; font-weight: 900; margin: 0; }
+.huge-pinyin { font-size: 45px; color: #3498db; font-weight: 700; margin: 5px 0; }
+.huge-fr { font-size: 30px; color: #505c6e; font-weight: 600; margin: 5px 0; }
 
-.answer-container { background-color: #f8f9fa; border-radius: 16px; padding: 10px 25px; margin-top: 15px; min-width: 60%; animation: fadeIn 0.3s ease-in; }
+.answer-container { background-color: #f8f9fa; border-radius: 16px; padding: 10px 25px; margin-top: 10px; min-width: 60%; animation: fadeIn 0.3s ease-in; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- BOUTONS RÉVÉLER / ACTION (300px) --- */
 
 /* Boutons génériques */
 .main .stButton button {
@@ -121,27 +123,28 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -20px; text-align: center
 .main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
 .main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
 
-/* Révéler (pleine largeur, collé) -- HAUTEUR AUGMENTEE */
+/* Révéler (pleine largeur, collé) */
 .main div:not([data-testid="column"]) .stButton button {
   background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
   color: white !important; border-radius: 0 0 24px 24px !important;
-  margin-top: -24px !important; width: 100% !important; 
-  height: 240px !important; /* <--- MODIF HAUTEUR */
+  margin-top: -24px !important; width: 100% !important;
+  height: 300px !important; /* <--- 300px DEMANDÉ */
   font-size: 56px !important; font-weight: 900 !important; z-index: 0;
 }
-.main div:not([data-testid="column"]) .stButton button:hover { filter: brightness(1.03); }
 
-/* Rangée des choix -- HAUTEUR AUGMENTEE */
+/* Rangée des choix (À revoir / Mémorisé) */
 .choice-row { width: 100%; box-sizing: border-box; }
 .choice-row [data-testid="column"] { padding-left: 0 !important; padding-right: 0 !important; }
 .choice-row [data-testid="column"]:first-of-type { padding-right: 6px !important; }
 .choice-row [data-testid="column"]:last-of-type  { padding-left: 6px !important; }
 .choice-row .stButton button {
   border-radius: 18px !important; 
-  height: 180px !important; /* <--- MODIF HAUTEUR */
+  height: 300px !important; /* <--- 300px DEMANDÉ */
   font-size: 30px !important; font-weight: 850 !important;
   margin-top: 22px; border: 3px solid transparent !important;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
 }
+
 .choice-row [data-testid="column"]:nth-of-type(1) .stButton button {
   background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; color: #ffffff !important;
 }
@@ -156,8 +159,16 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -20px; text-align: center
 }
 
 /* --- BOUTONS FLOTTANTS (Top-Left & Top-Right) --- */
-.fav-row { margin-top: -430px; /* superpose ~hauteur carte */ width: 100%; position: relative; z-index: 4; }
-.fav-row [data-testid="column"] { padding: 0 !important; }
+/* On remonte cette rangée pour qu'elle soit SUR la carte */
+.fav-row { 
+    margin-top: -490px; /* Doit correspondre à la hauteur de la carte (~500px) */
+    width: 100%; 
+    position: relative; 
+    z-index: 99; /* Très haut z-index pour être cliquable */
+    pointer-events: none; /* Le conteneur laisse passer les clics au milieu */
+    padding: 0 20px; /* Petite marge sur les côtés */
+}
+.fav-row [data-testid="column"] { padding: 0 !important; pointer-events: auto; /* Les boutons captent le clic */ }
 
 /* Style commun pour Back et Fav */
 .fav-row .stButton button {
@@ -262,7 +273,7 @@ if 'use_favorites_only' not in st.session_state: st.session_state.use_favorites_
 if '_toast_restored_shown' not in st.session_state: st.session_state._toast_restored_shown = False
 if 'history' not in st.session_state: st.session_state.history = []
 
-# silent load at startup (no toast spam)
+# silent load at startup
 load_favorites_from_disk()
 load_session_from_disk(show_toast=False)
 
@@ -332,9 +343,7 @@ def start_game():
     st.session_state.history = [] # Reset history
     save_session_to_disk()
 
-# --- UNDO / HISTORY ---
 def push_history():
-    # Sauvegarde l'état actuel avant modification
     state_snapshot = {
         'deck': list(st.session_state.deck),
         'current_card': st.session_state.current_card,
@@ -363,12 +372,12 @@ def next_card():
     save_session_to_disk()
 
 def mark_memorized():
-    push_history() # Save for undo
+    push_history()
     if st.session_state.deck: st.session_state.deck.pop(0)
     next_card()
 
 def mark_review():
-    push_history() # Save for undo
+    push_history()
     if st.session_state.deck:
         card = st.session_state.deck.pop(0)
         st.session_state.deck.append(card)
@@ -436,7 +445,6 @@ with st.sidebar:
         save_session_to_disk()
         st.success("Session sauvegardée dans session.json.")
     if cols_s[1].button("↩️ Restaurer la dernière session (manuel)", use_container_width=True):
-        # toast seulement ici (manuel), une seule fois
         st.session_state._toast_restored_shown = False
         load_session_from_disk(show_toast=True)
         rerun()
@@ -526,7 +534,7 @@ elif mode == 6:  # Symbole → Pinyin
 
 # --- AFFICHAGE ---
 with st.container():
-    # Carte
+    # 1. La Carte
     st.markdown(f"""
 <div class="flashcard-content">
   <div class="mode-indicator">{mode_text}</div>
@@ -537,12 +545,11 @@ with st.container():
 </div>
 """, unsafe_allow_html=True)
 
-    # ⭐ Rangée superposée: Boutons Haut-Gauche et Haut-Droite
+    # 2. Les Boutons Haut-Gauche et Haut-Droite (Superposés grâce à margin-top négatif)
     st.markdown('<div class="fav-row">', unsafe_allow_html=True)
     c_back, c_spacer, c_fav = st.columns([2, 6, 3])
     
     with c_back:
-        # Bouton Retour avec classe spécifique
         st.markdown('<div class="back-button">', unsafe_allow_html=True)
         if st.session_state.history:
             if st.button("⬅️ Retour", key="btn_back", help="Annuler la dernière action"):
@@ -553,7 +560,6 @@ with st.container():
         st.markdown('</div>', unsafe_allow_html=True)
 
     with c_fav:
-        # Bouton Favoris avec classe spécifique
         st.markdown('<div class="fav-button">', unsafe_allow_html=True)
         fav_label = "⭐ Favoris" if not is_current_favorite() else "★ Retirer"
         if st.button(fav_label, key="btn_fav", help="Ajouter/retirer des favoris"):
@@ -564,7 +570,7 @@ with st.container():
         
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Boutons d’action (Bas)
+    # 3. Les Boutons d’action (Bas)
     if not st.session_state.revealed:
         if st.button("👁️ Révéler la réponse", key="btn_reveal", use_container_width=True):
             st.session_state.revealed = True
