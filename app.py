@@ -359,7 +359,8 @@ def start_game():
             st.sidebar.error("⚠️ Choisis au moins une série !")
             return
         for serie_key in series_to_use:
-            for item in st.session_state.all_datafor m in modes_to_use:
+            for item in st.session_state.all_data[serie_key]:
+                for m in modes_to_use:
                     deck.append((item, m))
 
     random.shuffle(deck)
