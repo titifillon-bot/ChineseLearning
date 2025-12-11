@@ -12,7 +12,7 @@ def rerun():
         st.experimental_rerun()
 
 # ==============================================================================
-# --- NOUVEAU CSS MODERNE ---
+# --- NOUVEAU CSS MODERNE (MODIFIÉ POUR TAILLE FIXE) ---
 # ==============================================================================
 st.markdown(
     """
@@ -22,94 +22,104 @@ st.markdown(
 
     /* --- 1. FOND GÉNÉRAL ET CONTAINERS --- */
     .stApp {
-        background-color: #f0f2f5; /* Fond gris doux pour l'app */
+        background-color: #f0f2f5;
     }
 
-    /* Centrer le contenu principal */
     .main .block-container {
         max-width: 900px;
         padding-top: 2rem;
         padding-bottom: 5rem;
     }
 
-    /* Réduire l'espace sous la barre de progression */
     .stProgress > div > div > div {
         height: 10px !important;
     }
     div[data-testid="stCaptionContainer"] {
-        margin-bottom: -20px; /* Remonte le contenu suivant */
+        margin-bottom: -20px;
         text-align: center;
         font-weight: 600;
         color: #6c757d;
     }
 
-    /* --- 2. LA CARTE (CONTENU TEXTE) --- */
+    /* --- 2. LA CARTE (TAILLE FIXE MAINTENANT) --- */
     .flashcard-content {
         background-color: #ffffff;
-        padding: 40px 30px;
-        border-radius: 24px 24px 0 0; /* Arrondi en haut seulement */
+        padding: 20px 30px; /* Padding un peu réduit */
+        border-radius: 24px 24px 0 0;
         box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
         text-align: center;
         margin-top: 25px;
         border-bottom: 2px solid #f0f2f5;
-        min-height: 300px; /* Hauteur minimale pour la stabilité */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        
+        /* --- MODIFICATION CLÉ ICI : HAUTEUR FIXE --- */
+        height: 450px !important;       /* Hauteur forcée */
+        display: flex;                  /* Active Flexbox */
+        flex-direction: column;         /* Colonne verticale */
+        justify-content: center;        /* Centre tout verticalement */
+        align-items: center;            /* Centre tout horizontalement */
+        overflow: hidden;               /* Coupe ce qui dépasse */
+        position: relative;
     }
 
     /* --- 3. TYPOGRAPHIE DE LA CARTE --- */
     .mode-indicator {
-        font-size: 18px;
+        position: absolute;             /* Fixe le titre en haut de la carte */
+        top: 30px;
+        left: 0; 
+        right: 0;
+        font-size: 16px;
         text-transform: uppercase;
         letter-spacing: 1.5px;
         color: #adb5bd;
         font-weight: 700;
-        margin-bottom: 30px;
+    }
+
+    /* Conteneur pour grouper Question/Réponse au centre */
+    .content-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
     }
 
     .huge-char {
-        font-size: 150px;
+        font-size: 130px; /* Légèrement réduit pour bien tenir */
         line-height: 1.2;
         color: #2c3e50;
         font-weight: 900;
-        margin: 10px 0;
+        margin: 0;
     }
     .huge-pinyin {
-        font-size: 60px;
+        font-size: 50px;
         color: #3498db;
         font-weight: 700;
         margin: 5px 0;
     }
     .huge-fr {
-        font-size: 45px;
+        font-size: 35px;
         color: #505c6e;
         font-weight: 600;
-         margin: 5px 0;
+        margin: 5px 0;
     }
 
-    /* --- 4. ZONE RÉPONSE (Grisée) --- */
+    /* --- 4. ZONE RÉPONSE --- */
     .answer-container {
         background-color: #f8f9fa;
         border-radius: 16px;
-        padding: 20px;
-        margin-top: 30px;
-        width: 100%;
+        padding: 15px 25px;
+        margin-top: 20px;
+        min-width: 60%;
         animation: fadeIn 0.3s ease-in;
     }
-    @keyframes fadeIn { font-from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     /* ========================================================================
-       --- 5. STYLISATION DES BOUTONS STREAMLIT ---
-       C'est la partie cruciale pour corriger l'aspect des boutons.
+       --- 5. STYLISATION DES BOUTONS ---
     ======================================================================== */
 
-    /* Style de base pour TOUS les boutons dans la zone principale */
     .main .stButton button {
         width: 100%;
-        border-radius: 0 0 24px 24px !important; /* Arrondi en bas pour coller à la carte */
         height: 90px !important;
         font-size: 24px !important;
         font-weight: 800 !important;
@@ -120,43 +130,35 @@ st.markdown(
         letter-spacing: 1px;
     }
 
-    /* Effet au survol et clic */
     .main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
     .main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
 
-    /* --- COULEURS SPÉCIFIQUES --- */
-
     /* Bouton RÉVÉLER (Bleu) */
-    /* On cible le bouton unique quand il n'y a pas de colonnes */
     .main div:not([data-testid="column"]) > .stButton button {
         background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
         color: white !important;
-        border-radius: 0 0 24px 24px !important;
-        margin-top: -5px; /* Coller à la carte */
+        border-radius: 0 0 24px 24px !important; /* Collé à la carte */
+        margin-top: -5px; 
     }
 
-    /* Boutons de VALIDATION (quand révélé) */
-    /* On cible les boutons à l'intérieur des colonnes */
+    /* Boutons de VALIDATION (Séparés) */
     .main div[data-testid="column"] .stButton button {
-         border-radius: 16px !important; /* Arrondi complet quand ils sont séparés */
+         border-radius: 16px !important;
          height: 100px !important;
          font-size: 26px !important;
-         margin-top: 20px; /* Espace entre la carte et les boutons de choix */
+         margin-top: 20px; /* Espace fixe */
     }
 
-    /* Bouton "À REVOIR" (Colonne de gauche -> Rouge) */
     div[data-testid="column"]:nth-of-type(1) .stButton button {
         background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
         color: white !important;
     }
 
-    /* Bouton "MÉMORISÉ" (Colonne de droite -> Vert) */
     div[data-testid="column"]:nth-of-type(2) .stButton button {
         background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
         color: white !important;
     }
 
-    /* Ajustement Sidebar */
     .css-1d391kg { background-color: #ffffff; }
     .st-emotion-cache-16txtl3 { padding: 2rem 1rem; }
     </style>
@@ -302,7 +304,6 @@ def mark_review():
 
 # ================= INTERFACE =================
 
-# --- SIDEBAR (Inchangée dans la logique, juste un peu de style via CSS) ---
 with st.sidebar:
     st.header("🎴 Configuration")
     st.subheader("1. Séries")
@@ -324,7 +325,6 @@ with st.sidebar:
         st.checkbox(m_name, key=f"chk_mode_{m_id}")
 
     st.markdown("---")
-    # Bouton de lancement (style par défaut de sidebar, c'est ok)
     if st.button("🚀 LANCER UNE SESSION", type="primary", use_container_width=True):
         start_game()
         rerun()
@@ -357,7 +357,7 @@ item, mode = st.session_state.current_card
 char, pinyin, fr = item
 mode_text = GAME_MODES[mode]
 
-# Barre de progression (Style ajusté via CSS)
+# Barre de progression
 total = st.session_state.total_cards_initial
 restant = len(st.session_state.deck)
 progress_val = (total - restant) / total if total > 0 else 0
@@ -397,35 +397,31 @@ elif mode == 6: # Symbole → Pinyin
 
 
 # ================= AFFICHAGE DE LA CARTE =================
-# On utilise st.container pour grouper visuellement, mais on ne met PAS
-# les boutons Streamlit DANS le HTML personnalisé de la carte.
-
 with st.container():
-    # 1. Le haut de la carte (indicateur de mode + question)
+    # 1. Le contenu HTML (fixe)
+    # J'ajoute un "wrapper" div pour centrer verticalement question + réponse ensemble
     st.markdown(f"""
         <div class="flashcard-content">
             <div class="mode-indicator">{mode_text}</div>
-            {q_html}
-            {a_html if st.session_state.revealed else ""}
+            <div class="content-wrapper">
+                {q_html}
+                {a_html if st.session_state.revealed else ""}
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-    # 2. Zone des boutons d'action (en dehors du HTML de la carte, géré par Streamlit + CSS)
+    # 2. Zone des boutons d'action
     if not st.session_state.revealed:
-        # Un seul gros bouton qui prend toute la largeur
         if st.button("👁️ Révéler la réponse", key="btn_reveal"):
             st.session_state.revealed = True
             rerun()
     else:
-        # Deux gros boutons côte à côte
         c_ko, c_ok = st.columns(2, gap="medium")
         with c_ko:
-            # Le CSS cible ce bouton car il est dans la 1ère colonne
             if st.button("❌ À revoir", key="btn_ko"):
                 mark_review()
                 rerun()
         with c_ok:
-            # Le CSS cible ce bouton car il est dans la 2ème colonne
             if st.button("✅ Mémorisé", key="btn_ok"):
                 mark_memorized()
                 rerun()
