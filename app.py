@@ -1,3 +1,4 @@
+
 import streamlit as st
 import random
 import json
@@ -89,15 +90,14 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 .stProgress > div > div > div { height: 10px !important; }
 div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center; font-weight: 600; color: #6c757d; }
 
-/* --- BARRE DU HAUT (Retour/Fav) --- */
-/* Pour éviter qu'ils ne soient affectés par le style géant, on les cible spécifiquement */
+/* --- BARRE DU HAUT (Retour/Fav/Reset) --- */
 div[data-testid="column"] .stButton button {
     width: 100%;
     border-radius: 12px;
     font-weight: 700;
     border-width: 2px;
     padding: 0.5rem 1rem;
-    height: auto !important; /* Garder taille normale en haut */
+    height: auto !important;
 }
 
 /* --- CARTE --- */
@@ -106,13 +106,13 @@ div[data-testid="column"] .stButton button {
   padding: 20px 30px;
   border-radius: 24px 24px 0 0;
   box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
-  text-align: center; 
-  margin-top: 15px; 
-  height: 500px !important; 
+  text-align: center;
+  margin-top: 15px;
+  height: 500px !important;
   display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
   overflow: hidden; position: relative; z-index: 1;
   width: 100%; box-sizing: border-box;
-  margin-bottom: 0 !important; /* Pas de marge en bas pour coller aux boutons */
+  margin-bottom: 0 !important;
 }
 .mode-indicator { margin-top: 50px; font-size: 16px; text-transform: uppercase; letter-spacing: 1.5px; color: #adb5bd; font-weight: 700; }
 .content-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 20px; }
@@ -125,17 +125,15 @@ div[data-testid="column"] .stButton button {
 /* --- BOUTONS GÉANTS (Révéler / Choix) --- */
 
 /* 1. Zone Révéler (Bleu) */
-.area-reveal {
-    margin-top: -10px !important; /* Remonte vers la carte */
-}
+.area-reveal { margin-top: -10px !important; }
 .area-reveal .stButton button {
-    height: 300px !important;      /* FORCE LA HAUTEUR */
+    height: 300px !important;
     width: 100% !important;
     background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
-    color: white !important; 
+    color: white !important;
     border-radius: 0 0 24px 24px !important;
-    font-size: 40px !important; 
-    font-weight: 900 !important; 
+    font-size: 40px !important;
+    font-weight: 900 !important;
     border: none !important;
     box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
 }
@@ -145,9 +143,8 @@ div[data-testid="column"] .stButton button {
 }
 
 /* 2. Zone Choix (Rouge / Vert) */
-/* Cible les boutons à l'intérieur des colonnes de la zone 'area-choices' */
 .area-choices .stButton button {
-    height: 300px !important;      /* FORCE LA HAUTEUR */
+    height: 300px !important;
     width: 100% !important;
     font-size: 30px !important;
     font-weight: 800 !important;
@@ -156,10 +153,6 @@ div[data-testid="column"] .stButton button {
     border: 3px solid transparent !important;
     margin-top: 10px !important;
 }
-
-/* Bouton "À revoir" (premier bouton trouvé dans area-choices, souvent le rouge si c'est la 1ère colonne) */
-/* Astuce : on cible via CSS spécifique injecté dans le python pour être sûr */
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -231,8 +224,8 @@ if 'all_data' not in st.session_state:
         ]
     }
 
-GAME_MODES = { 1: "Pinyin → FR", 2: "FR → Pinyin", 3: "FR -> Symbole",
-               4: "Symbole → FR", 5: "Pinyin -> Symbole", 6: "Symbole → Pinyin" }
+GAME_MODES = { 1: "Pinyin → FR", 2: "FR → Pinyin", 3: "FR → Symbole",
+               4: "Symbole → FR", 5: "Pinyin → Symbole", 6: "Symbole → Pinyin" }
 
 # --- STATE ---
 if 'deck' not in st.session_state: st.session_state.deck = []
@@ -312,7 +305,7 @@ def start_game():
     st.session_state.game_active = True
     st.session_state.revealed = False
     st.session_state.current_card = st.session_state.deck[0] if st.session_state.deck else None
-    st.session_state.history = [] # Reset history
+    st.session_state.history = []  # Reset history
     save_session_to_disk()
 
 def push_history():
@@ -354,6 +347,36 @@ def mark_review():
         card = st.session_state.deck.pop(0)
         st.session_state.deck.append(card)
     next_card()
+
+# --- RESET (ne touche pas aux favoris) ---
+def reset_session():
+    """Réinitialise complètement la session en cours, sans toucher aux favoris."""
+    # Purge des états principaux
+    st.session_state.deck = []
+    st.session_state.current_card = None
+    st.session_state.revealed = False
+    st.session_state.game_active = False
+    st.session_state.total_cards_initial = 0
+    st.session_state.history = []
+    st.session_state._toast_restored_shown = False
+
+    # Sécurité: remet le mode 'Favoris uniquement' à False
+    st.session_state.use_favorites_only = False
+
+    # Remet les cases Séries et Modes à True (valeurs par défaut)
+    for k in st.session_state.all_data.keys():
+        st.session_state[f"chk_serie_{k}"] = True
+    for k in GAME_MODES.keys():
+        st.session_state[f"chk_mode_{k}"] = True
+
+    # Vide proprement le fichier de session
+    try:
+        SESSION_FILE.write_text(json.dumps({}, indent=2), encoding="utf-8")
+    except Exception as e:
+        st.sidebar.warning(f"Session: impossible d'écrire: {e}")
+
+    st.toast("♻️ Session réinitialisée.", icon="✅")
+    rerun()
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -437,6 +460,13 @@ with st.sidebar:
             st.error(f"Erreur d'import session : {e}")
 
     st.markdown("---")
+    st.subheader("♻️ Réinitialisation")
+    cols_r = st.columns(2)
+    cols_r[0].button("🔄 Reset session", use_container_width=True, on_click=reset_session)
+    # Place réservée si tu veux plus tard ajouter un 'Reset complet' (favoris + session)
+    cols_r[1].markdown("&nbsp;")
+
+    st.markdown("---")
     if st.button("🚀 LANCER UNE SESSION", type="primary", use_container_width=True):
         start_game()
         rerun()
@@ -491,13 +521,13 @@ if mode == 1:  # Pinyin → FR
 elif mode == 2:  # FR → Pinyin
     q_html = f'<div class="huge-fr" style="font-size: 50px;">{fr}</div>'
     a_html = format_answer((char, "huge-char"), (pinyin, "huge-pinyin"))
-elif mode == 3:  # FR -> Symbole
+elif mode == 3:  # FR → Symbole
     q_html = f'<div class="huge-fr" style="font-size: 50px;">{fr}</div>'
     a_html = format_answer((char, "huge-char"), (pinyin, "huge-pinyin"))
 elif mode == 4:  # Symbole → FR
     q_html = f'<div class="huge-char">{char}</div>'
     a_html = format_answer((pinyin, "huge-pinyin"), (fr, "huge-fr"))
-elif mode == 5:  # Pinyin -> Symbole
+elif mode == 5:  # Pinyin → Symbole
     q_html = f'<div class="huge-pinyin">{pinyin}</div>'
     a_html = format_answer((char, "huge-char"), (fr, "huge-fr"))
 elif mode == 6:  # Symbole → Pinyin
@@ -506,10 +536,9 @@ elif mode == 6:  # Symbole → Pinyin
 
 # --- AFFICHAGE PRINCIPAL ---
 with st.container():
-    
     # 1. Barre du HAUT
-    c_back, c_spacer, c_fav = st.columns([1, 3, 1])
-    
+    c_back, c_spacer, c_fav, c_reset = st.columns([1, 2, 1, 1])
+
     with c_back:
         if st.session_state.history:
             if st.button("⬅️ Retour", key="btn_back", help="Annuler la dernière action"):
@@ -526,6 +555,10 @@ with st.container():
             save_session_to_disk()
             rerun()
 
+    with c_reset:
+        if st.button("♻️ Reset", key="btn_reset", help="Réinitialiser la session courante (favoris conservés)"):
+            reset_session()
+
     # 2. La Carte
     st.markdown(f"""
     <div class="flashcard-content">
@@ -538,7 +571,6 @@ with st.container():
     """, unsafe_allow_html=True)
 
     # 3. Les Boutons d’action GÉANTS
-    # On utilise des DIV wrappers (.area-reveal et .area-choices) pour que le CSS cible bien les boutons à l'intérieur
     if not st.session_state.revealed:
         # WRAPPER POUR RÉVÉLER
         st.markdown('<div class="area-reveal">', unsafe_allow_html=True)
@@ -550,13 +582,13 @@ with st.container():
     else:
         # WRAPPER POUR CHOIX
         st.markdown('<div class="area-choices">', unsafe_allow_html=True)
-        
+
         # Injection CSS spécifique aux couleurs ici pour être sûr de surcharger
         st.markdown("""
         <style>
         /* Force couleur Rouge pour colonne 1 de area-choices */
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; 
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
             color: #ffffff !important;
         }
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
@@ -564,7 +596,7 @@ with st.container():
         }
         /* Force couleur Verte pour colonne 2 de area-choices */
         .area-choices div[data-testid="column"]:nth-of-type(2) .stButton button {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important; 
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
             color: #ffffff !important;
         }
         .area-choices div[data-testid="column"]:nth-of-type(2) .stButton button:hover {
@@ -572,7 +604,7 @@ with st.container():
         }
         </style>
         """, unsafe_allow_html=True)
-        
+
         c_ko, c_ok = st.columns(2, gap="small")
         with c_ko:
             if st.button("❌ À revoir", key="btn_ko", use_container_width=True):
@@ -584,5 +616,5 @@ with st.container():
                 mark_memorized()
                 save_session_to_disk()
                 rerun()
-        
+
         st.markdown('</div>', unsafe_allow_html=True)
