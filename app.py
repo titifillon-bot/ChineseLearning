@@ -2,22 +2,23 @@
 import streamlit as st
 import random
 import json
-import copy
 from pathlib import Path
 
-# =============== CONFIG ===============
+# --- CONFIG PAGE ---
 st.set_page_config(page_title="Radicaux Chinois", layout="wide", initial_sidebar_state="expanded")
 
+# --- FILES ---
 FAV_FILE = Path("favoris.json")
 SESSION_FILE = Path("session.json")
 
+# --- RERUN ---
 def rerun():
     try:
         st.rerun()
     except AttributeError:
         st.experimental_rerun()
 
-# =============== PERSISTENCE ===============
+# --- FAVORIS: LOAD/SAVE ---
 def load_favorites_from_disk():
     if FAV_FILE.exists():
         try:
@@ -33,6 +34,7 @@ def save_favorites_to_disk():
     except Exception as e:
         st.sidebar.warning(f"Favoris: impossible d'écrire: {e}")
 
+# --- SESSION: LOAD/SAVE ---
 def load_session_from_disk(show_toast: bool = False):
     if SESSION_FILE.exists():
         try:
@@ -45,13 +47,15 @@ def load_session_from_disk(show_toast: bool = False):
             st.session_state.game_active = bool(data.get("game_active", False))
             st.session_state.total_cards_initial = int(data.get("total_cards_initial", len(st.session_state.deck)))
             st.session_state.use_favorites_only = bool(data.get("use_favorites_only", False))
-            st.session_state.auto_save_enabled = bool(data.get("auto_save_enabled", False))
+            # restaure checkboxes
             for k, v in data.get("series_flags", {}).items():
                 st.session_state[k] = bool(v)
             for k, v in data.get("mode_flags", {}).items():
                 st.session_state[k] = bool(v)
-            if show_toast:
+            # évite le toast répétitif
+            if show_toast and not st.session_state.get("_toast_restored_shown", False):
                 st.toast("🧯 Session restaurée", icon="✅")
+                st.session_state._toast_restored_shown = True
         except Exception as e:
             st.sidebar.warning(f"Session: impossible de charger: {e}")
 
@@ -66,7 +70,6 @@ def save_session_to_disk():
             "game_active": st.session_state.get("game_active", False),
             "total_cards_initial": st.session_state.get("total_cards_initial", 0),
             "use_favorites_only": st.session_state.get("use_favorites_only", False),
-            "auto_save_enabled": st.session_state.get("auto_save_enabled", False),
             "series_flags": {f"chk_serie_{k}": st.session_state.get(f"chk_serie_{k}", True) for k in st.session_state.all_data.keys()},
             "mode_flags": {f"chk_mode_{k}": st.session_state.get(f"chk_mode_{k}", True) for k in GAME_MODES.keys()},
         }
@@ -74,12 +77,7 @@ def save_session_to_disk():
     except Exception as e:
         st.sidebar.warning(f"Session: impossible d'écrire: {e}")
 
-def maybe_save():
-    """Sauvegarde la session uniquement si l'auto-save est activé."""
-    if st.session_state.get("auto_save_enabled", False):
-        save_session_to_disk()
-
-# =============== CSS ===============
+# --- CSS ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
@@ -133,7 +131,7 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -20px; text-align: center
 }
 .main div:not([data-testid="column"]) .stButton button:hover { filter: brightness(1.03); }
 
-/* Rangée des choix (moitié/moitié, petit gap) */
+/* Rangée des choix */
 .choice-row { width: 100%; box-sizing: border-box; }
 .choice-row [data-testid="column"] { padding-left: 0 !important; padding-right: 0 !important; }
 .choice-row [data-testid="column"]:first-of-type { padding-right: 6px !important; }
@@ -155,28 +153,21 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -20px; text-align: center
   background: #ffffff !important; color: #27ae60 !important; border: 3px solid #27ae60 !important;
 }
 
-/* --- ÉTOILE FAV EN HAUT-DROITE ---
-   Technique overlay: rangée superposée placée APRÈS la carte, remontée par marge négative
-   et ancrée à droite via la colonne droite. Ajuste la marge si tu changes la hauteur de la carte. */
-.fav-row-top { margin-top: -440px; width: 100%; position: relative; z-index: 4; }
-.fav-row-top [data-testid="column"] { padding: 0 !important; }
-.fav-row-top .stButton button {
+/* --- ÉTOILE FAV EN HAUT-DROITE DE LA CARTE ---
+   Technique: on insère une rangée (fav-row) juste après la carte,
+   superposée grâce à une marge négative et alignée à droite */
+.fav-row { margin-top: -430px; /* superpose ~hauteur carte */ width: 100%; position: relative; z-index: 4; }
+.fav-row [data-testid="column"] { padding: 0 !important; }
+.fav-row .stButton button {
   background: #ffd54f !important; color: #8d6e63 !important;
   border-radius: 22px !important; height: 42px !important; font-size: 16px !important; font-weight: 800 !important;
   padding: 6px 14px !important; border: 2px solid #ffca28 !important; box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
-.fav-row-top .stButton button:hover { background: #fff8e1 !important; color: #e65100 !important; border: 2px solid #f9a825 !important; transform: translateY(-2px); }
-
-/* --- BARRE D'OUTILS SOUS LA CARTE (Undo & info save) --- */
-.tools-row { margin-top: 12px; }
-.tools-row [data-testid="column"] { padding: 0 !important; }
-.tools-row .stButton button {
-  border-radius: 10px !important; height: 44px !important; font-size: 16px !important; font-weight: 700 !important;
-}
+.fav-row .stButton button:hover { background: #fff8e1 !important; color: #e65100 !important; border: 2px solid #f9a825 !important; transform: translateY(-2px); }
 </style>
 """, unsafe_allow_html=True)
 
-# =============== DATA ===============
+# --- DATA ---
 if 'all_data' not in st.session_state:
     st.session_state.all_data = {
         "1-10": [
@@ -244,12 +235,10 @@ if 'all_data' not in st.session_state:
         ]
     }
 
-GAME_MODES = {
-    1: "Pinyin → FR", 2: "FR → Pinyin", 3: "FR -> Symbole",
-    4: "Symbole → FR", 5: "Pinyin -> Symbole", 6: "Symbole → Pinyin"
-}
+GAME_MODES = { 1: "Pinyin → FR", 2: "FR → Pinyin", 3: "FR -> Symbole",
+               4: "Symbole → FR", 5: "Pinyin -> Symbole", 6: "Symbole → Pinyin" }
 
-# =============== STATE INIT ===============
+# --- STATE ---
 if 'deck' not in st.session_state: st.session_state.deck = []
 if 'current_card' not in st.session_state: st.session_state.current_card = None
 if 'revealed' not in st.session_state: st.session_state.revealed = False
@@ -257,55 +246,19 @@ if 'game_active' not in st.session_state: st.session_state.game_active = False
 if 'total_cards_initial' not in st.session_state: st.session_state.total_cards_initial = 0
 if 'favorites' not in st.session_state: st.session_state.favorites = []
 if 'use_favorites_only' not in st.session_state: st.session_state.use_favorites_only = False
-if 'auto_save_enabled' not in st.session_state: st.session_state.auto_save_enabled = False  # OFF par défaut
-if 'history' not in st.session_state: st.session_state.history = []  # pile d'undo
+if '_toast_restored_shown' not in st.session_state: st.session_state._toast_restored_shown = False
 
-# Chargements silencieux (pas de toast au démarrage)
+# silent load at startup (no toast spam)
 load_favorites_from_disk()
 load_session_from_disk(show_toast=False)
 
-# Checkboxes init
+# init checkboxes
 for k in st.session_state.all_data.keys():
     if f"chk_serie_{k}" not in st.session_state: st.session_state[f"chk_serie_{k}"] = True
 for k in GAME_MODES.keys():
     if f"chk_mode_{k}" not in st.session_state: st.session_state[f"chk_mode_{k}"] = True
 
-# =============== UNDO HELPERS ===============
-def snapshot_state():
-    """Prend un instantané cloné de l'état de jeu (pour Undo)."""
-    return {
-        "deck": copy.deepcopy(st.session_state.deck),
-        "current_card": copy.deepcopy(st.session_state.current_card),
-        "revealed": st.session_state.revealed,
-        "game_active": st.session_state.game_active,
-        "total_cards_initial": st.session_state.total_cards_initial,
-        "use_favorites_only": st.session_state.use_favorites_only,
-        "favorites": copy.deepcopy(st.session_state.favorites),
-    }
-
-def push_history():
-    st.session_state.history.append(snapshot_state())
-    # limite la pile pour éviter de grossir trop
-    if len(st.session_state.history) > 100:
-        st.session_state.history.pop(0)
-
-def undo_last():
-    if st.session_state.history:
-        last = st.session_state.history.pop()
-        st.session_state.deck = last["deck"]
-        st.session_state.current_card = last["current_card"]
-        st.session_state.revealed = last["revealed"]
-        st.session_state.game_active = last["game_active"]
-        st.session_state.total_cards_initial = last["total_cards_initial"]
-        st.session_state.use_favorites_only = last["use_favorites_only"]
-        st.session_state.favorites = last["favorites"]
-        maybe_save()
-        st.toast("↩️ Retour en arrière appliqué", icon="⏪")
-        rerun()
-    else:
-        st.toast("Rien à annuler", icon="ℹ️")
-
-# =============== LOGIC ===============
+# --- LOGIC ---
 def toggle_all_series(state: bool):
     for k in st.session_state.all_data.keys():
         st.session_state[f"chk_serie_{k}"] = state
@@ -321,7 +274,6 @@ def is_current_favorite() -> bool:
 
 def toggle_favorite():
     if st.session_state.current_card is None: return
-    push_history()
     (char, pinyin, fr), _ = st.session_state.current_card
     if is_current_favorite():
         st.session_state.favorites = [f for f in st.session_state.favorites
@@ -330,8 +282,7 @@ def toggle_favorite():
     else:
         st.session_state.favorites.append({"char": char, "pinyin": pinyin, "fr": fr})
         st.toast("⭐ Ajouté aux favoris", icon="⭐")
-    save_favorites_to_disk()  # favoris se sauvegardent toujours
-    maybe_save()
+    save_favorites_to_disk()
 
 def start_game():
     deck = []
@@ -339,6 +290,7 @@ def start_game():
     if not modes_to_use:
         st.sidebar.error("⚠️ Choisis au moins un mode !")
         return
+
     if st.session_state.use_favorites_only:
         if not st.session_state.favorites:
             st.sidebar.error("⭐ Ajoute des favoris avant de lancer ce mode.")
@@ -357,14 +309,13 @@ def start_game():
                 for m in modes_to_use:
                     deck.append((item, m))
 
-    push_history()
     random.shuffle(deck)
     st.session_state.deck = deck
     st.session_state.total_cards_initial = len(deck)
     st.session_state.game_active = True
     st.session_state.revealed = False
     st.session_state.current_card = st.session_state.deck[0] if st.session_state.deck else None
-    maybe_save()
+    save_session_to_disk()
 
 def next_card():
     st.session_state.revealed = False
@@ -373,26 +324,23 @@ def next_card():
     else:
         st.session_state.current_card = None
         st.session_state.game_active = False
-    maybe_save()
+    save_session_to_disk()
 
 def mark_memorized():
-    if st.session_state.deck:
-        push_history()
-        st.session_state.deck.pop(0)
+    if st.session_state.deck: st.session_state.deck.pop(0)
     next_card()
 
 def mark_review():
     if st.session_state.deck:
-        push_history()
         card = st.session_state.deck.pop(0)
         st.session_state.deck.append(card)
     next_card()
 
-# =============== SIDEBAR ===============
+# --- SIDEBAR ---
 with st.sidebar:
     st.header("🎴 Configuration")
+    st.subheader("Source du deck")
     st.checkbox("🎯 Mode Favoris (utiliser uniquement les cartes favorites)", key="use_favorites_only")
-    st.checkbox("💾 Activer l'auto‑sauvegarde de la session", key="auto_save_enabled", value=False)
     st.caption(f"Favoris actuels : **{len(st.session_state.favorites)}**")
 
     st.subheader("1. Séries")
@@ -412,24 +360,25 @@ with st.sidebar:
         st.checkbox(m_name, key=f"chk_mode_{m_id}")
 
     st.markdown("---")
-    st.subheader("💾 Sauvegarde manuelle")
-    cols_s = st.columns(2)
-    if cols_s[0].button("💾 Sauvegarder la session (manuel)", use_container_width=True):
-        save_session_to_disk()
-        st.success("Session sauvegardée dans session.json.")
-    if cols_s[1].button("↩️ Restaurer la dernière session (manuel)", use_container_width=True):
-        load_session_from_disk(show_toast=True)
-        rerun()
-
-    st.download_button("⬇️ Télécharger session.json",
-                       data=SESSION_FILE.read_text(encoding="utf-8") if SESSION_FILE.exists() else json.dumps({}, indent=2),
-                       file_name="session.json", mime="application/json", use_container_width=True)
-
     st.subheader("⭐ Favoris")
+    with st.expander("Gérer mes favoris"):
+        if st.session_state.favorites:
+            for i, fav in enumerate(st.session_state.favorites):
+                cols = st.columns([4, 3, 3, 2])
+                cols[0].markdown(f"**{fav['char']}**")
+                cols[1].markdown(f"*{fav['pinyin']}*")
+                cols[2].markdown(f"{fav['fr']}")
+                if cols[3].button("Retirer", key=f"fav_rm_{i}"):
+                    st.session_state.favorites.pop(i)
+                    save_favorites_to_disk()
+                    st.toast("Favori retiré.", icon="🗑️")
+                    rerun()
+        else:
+            st.caption("Aucun favori pour l'instant.")
     st.download_button("⬇️ Télécharger favoris.json",
                        data=json.dumps(st.session_state.favorites, ensure_ascii=False, indent=2),
                        file_name="favoris.json", mime="application/json", use_container_width=True)
-    up_fav = st.file_uploader("📥 Importer favoris.json", type=["json"])
+    up_fav = st.file_uploader("📥 Importer favoris.json", type=["json"], key="uploader_favs")
     if up_fav is not None:
         try:
             imported = json.loads(up_fav.read().decode("utf-8"))
@@ -437,23 +386,49 @@ with st.sidebar:
                 st.session_state.favorites = imported
                 save_favorites_to_disk()
                 st.success(f"Import favoris réussi : {len(imported)} éléments.")
-                rerun()
             else:
                 st.error("Format invalide: attendu liste d'objets {char,pinyin,fr}.")
         except Exception as e:
             st.error(f"Erreur d'import favoris : {e}")
 
     st.markdown("---")
+    st.subheader("💾 Sauvegarde globale de la session")
+    cols_s = st.columns(2)
+    if cols_s[0].button("💾 Sauvegarder la session (manuel)", use_container_width=True):
+        save_session_to_disk()
+        st.success("Session sauvegardée dans session.json.")
+    if cols_s[1].button("↩️ Restaurer la dernière session (manuel)", use_container_width=True):
+        # toast seulement ici (manuel), une seule fois
+        st.session_state._toast_restored_shown = False
+        load_session_from_disk(show_toast=True)
+        rerun()
+
+    st.download_button("⬇️ Télécharger session.json",
+                       data=SESSION_FILE.read_text(encoding="utf-8") if SESSION_FILE.exists() else json.dumps({}, indent=2),
+                       file_name="session.json", mime="application/json", use_container_width=True)
+    up_sess = st.file_uploader("📥 Importer session.json", type=["json"], key="uploader_session")
+    if up_sess is not None:
+        try:
+            imported = json.loads(up_sess.read().decode("utf-8"))
+            SESSION_FILE.write_text(json.dumps(imported, ensure_ascii=False, indent=2), encoding="utf-8")
+            st.session_state._toast_restored_shown = False
+            load_session_from_disk(show_toast=True)
+            st.success("Session importée et restaurée.")
+            rerun()
+        except Exception as e:
+            st.error(f"Erreur d'import session : {e}")
+
+    st.markdown("---")
     if st.button("🚀 LANCER UNE SESSION", type="primary", use_container_width=True):
         start_game()
         rerun()
 
-# =============== MAIN AREA ===============
+# --- MAIN ---
 if not st.session_state.game_active:
     st.markdown("""
         <div style='text-align: center; padding: 50px; color: #6c757d;'>
             <h1>👋 Bienvenue !</h1>
-            <p style='font-size: 1.2rem;'>Choisis ta source (Favoris ou Séries) et tes modes dans la barre latérale,<br>puis clique sur "Lancer une session".</p>
+            <p style='font-size: 1.2rem;'>Configure ta source (Favoris ou Séries) et tes modes dans la barre latérale,<br>puis clique sur "Lancer une session" pour commencer.</p>
         </div>
     """, unsafe_allow_html=True)
     st.stop()
@@ -468,9 +443,8 @@ if st.session_state.current_card is None:
     """, unsafe_allow_html=True)
     st.write("")
     if st.button("Recommencer une session", type="primary", use_container_width=True):
-        push_history()
         st.session_state.game_active = False
-        maybe_save()
+        save_session_to_disk()
         rerun()
     st.stop()
 
@@ -485,7 +459,7 @@ progress_val = (total - restant) / total if total > 0 else 0
 st.progress(progress_val)
 st.caption(f"Progression : {total - restant} / {total}")
 
-# Contenu HTML
+# HTML contenu
 def format_answer(top, bottom=None):
     html = f'<div class="answer-container"><div class="{top[1]}">{top[0]}</div>'
     if bottom:
@@ -512,9 +486,10 @@ elif mode == 6:  # Symbole → Pinyin
     q_html = f'<div class="huge-char">{char}</div>'
     a_html = format_answer((pinyin, "huge-pinyin"), (fr, "huge-fr"))
 
-# ========= AFFICHAGE =========
-# Carte
-st.markdown(f"""
+# --- AFFICHAGE ---
+with st.container():
+    # Carte
+    st.markdown(f"""
 <div class="flashcard-content">
   <div class="mode-indicator">{mode_text}</div>
   <div class="content-wrapper">
@@ -524,41 +499,34 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ⭐ Rangée superposée ANCRÉE EN HAUT DROITE
-# (placée APRES la carte et remontée par marge négative)
-st.markdown('<div class="fav-row-top">', unsafe_allow_html=True)
-left_spacer, star_col = st.columns([10, 2])  # la colonne droite pousse l'icône à droite
-with star_col:
-    fav_label = "⭐ Ajouter aux favoris" if not is_current_favorite() else "★ Retirer des favoris"
-    if st.button(fav_label, key="btn_fav", help="Ajouter/retirer des favoris"):
-        toggle_favorite()
-        rerun()
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Outils sous la carte (Undo + info auto-save)
-tools_l, tools_r = st.columns([1, 1])
-with tools_l:
-    if st.button("↩️ Retour en arrière", key="btn_undo"):
-        undo_last()
-with tools_r:
-    st.info(f"Auto‑sauvegarde : {'activée' if st.session_state.get('auto_save_enabled', False) else 'désactivée'}")
-
-# Boutons d’action
-if not st.session_state.revealed:
-    if st.button("👁️ Révéler la réponse", key="btn_reveal", use_container_width=True):
-        push_history()
-        st.session_state.revealed = True
-        maybe_save()
-        rerun()
-else:
-    st.markdown('<div class="choice-row">', unsafe_allow_html=True)
-    c_ko, c_ok = st.columns(2, gap="small")
-    with c_ko:
-        if st.button("❌ À revoir", key="btn_ko", use_container_width=True):
-            mark_review()
-            rerun()
-    with c_ok:
-        if st.button("✅ Mémorisé", key="btn_ok", use_container_width=True):
-            mark_memorized()
+    # ⭐ Rangée superposée: bouton en haut-droite de la carte
+    st.markdown('<div class="fav-row">', unsafe_allow_html=True)
+    left, right = st.columns([8, 1])
+    with right:
+        fav_label = "⭐ Ajouter aux favoris" if not is_current_favorite() else "★ Retirer des favoris"
+        if st.button(fav_label, key="btn_fav", help="Ajouter/retirer des favoris"):
+            toggle_favorite()
+            save_session_to_disk()
             rerun()
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # Boutons d’action
+    if not st.session_state.revealed:
+        if st.button("👁️ Révéler la réponse", key="btn_reveal", use_container_width=True):
+            st.session_state.revealed = True
+            save_session_to_disk()
+            rerun()
+    else:
+        st.markdown('<div class="choice-row">', unsafe_allow_html=True)
+        c_ko, c_ok = st.columns(2, gap="small")
+        with c_ko:
+            if st.button("❌ À revoir", key="btn_ko", use_container_width=True):
+                mark_review()
+                save_session_to_disk()
+                rerun()
+        with c_ok:
+            if st.button("✅ Mémorisé", key="btn_ok", use_container_width=True):
+                mark_memorized()
+                save_session_to_disk()
+                rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
