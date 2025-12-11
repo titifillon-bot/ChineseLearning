@@ -75,7 +75,7 @@ def save_session_to_disk():
     except Exception as e:
         st.sidebar.warning(f"Session: impossible d'écrire: {e}")
 
-# --- CSS MODIFIÉ ET NETTOYÉ ---
+# --- CSS MODIFIÉ (HAUTEUR FORCÉE) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
@@ -90,13 +90,11 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center; font-weight: 600; color: #6c757d; }
 
 /* --- BARRE DU HAUT (Boutons Retour / Fav) --- */
-/* Style uniforme pour les boutons de la barre supérieure */
 div[data-testid="column"] .stButton button {
     width: 100%;
     border-radius: 12px;
     font-weight: 700;
     border-width: 2px;
-    height: auto !important;
     padding: 0.5rem 1rem !important;
 }
 
@@ -107,7 +105,7 @@ div[data-testid="column"] .stButton button {
   border-radius: 24px 24px 0 0;
   box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
   text-align: center; 
-  margin-top: 10px; /* Espace propre après la barre de boutons */
+  margin-top: 15px; 
   height: 500px !important; 
   display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
   overflow: hidden; position: relative; z-index: 1;
@@ -124,7 +122,7 @@ div[data-testid="column"] .stButton button {
 .answer-container { background-color: #f8f9fa; border-radius: 16px; padding: 10px 25px; margin-top: 10px; min-width: 60%; animation: fadeIn 0.3s ease-in; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* --- BOUTONS D'ACTION DU BAS (300px de haut) --- */
+/* --- BOUTONS D'ACTION DU BAS (300px DE HAUTEUR FORCÉE) --- */
 
 /* Animation générique */
 .main .stButton button {
@@ -134,34 +132,48 @@ div[data-testid="column"] .stButton button {
 .main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
 .main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
 
-/* Révéler (pleine largeur, collé au bas de la carte) */
+/* --- CIBLAGE PRÉCIS POUR LA HAUTEUR --- */
+
+/* 1. Bouton RÉVÉLER */
+/* On cible le div parent .reveal-btn puis le bouton dedans */
 .reveal-btn button {
   background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
-  color: white !important; border-radius: 0 0 24px 24px !important;
-  margin-top: -24px !important; width: 100% !important;
+  color: white !important; 
+  border-radius: 0 0 24px 24px !important;
+  margin-top: -24px !important; 
+  width: 100% !important;
+  /* HAUTEUR FORCÉE ICI */
   height: 300px !important; 
-  font-size: 56px !important; font-weight: 900 !important; z-index: 0; border: none !important;
+  min-height: 300px !important;
+  font-size: 40px !important; 
+  font-weight: 900 !important; 
+  z-index: 0; border: none !important;
 }
 
-/* Rangée des choix (À revoir / Mémorisé) */
+/* 2. Boutons CHOIX (Revoir / Mémorisé) */
 .choice-row { width: 100%; box-sizing: border-box; }
-.choice-row [data-testid="column"] { padding-left: 0 !important; padding-right: 0 !important; }
-.choice-row [data-testid="column"]:first-of-type { padding-right: 6px !important; }
-.choice-row [data-testid="column"]:last-of-type  { padding-left: 6px !important; }
+.choice-row [data-testid="column"] { padding: 0 5px !important; }
+
 .choice-row .stButton button {
   border-radius: 18px !important; 
+  /* HAUTEUR FORCÉE ICI */
   height: 300px !important; 
-  font-size: 30px !important; font-weight: 850 !important;
-  margin-top: 22px; border: 3px solid transparent !important;
+  min-height: 300px !important;
+  font-size: 28px !important; 
+  font-weight: 850 !important;
+  margin-top: 22px; 
+  border: 3px solid transparent !important;
   display: flex; flex-direction: column; justify-content: center; align-items: center;
 }
 
+/* Couleurs spécifiques pour Revoir/Mémorisé */
 .choice-row [data-testid="column"]:nth-of-type(1) .stButton button {
   background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; color: #ffffff !important;
 }
 .choice-row [data-testid="column"]:nth-of-type(1) .stButton button:hover {
   background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
 }
+
 .choice-row [data-testid="column"]:nth-of-type(2) .stButton button {
   background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important; color: #ffffff !important;
 }
@@ -530,13 +542,12 @@ with st.container():
     with c_fav:
         is_fav = is_current_favorite()
         label_fav = "★ Retirer" if is_fav else "⭐ Favoris"
-        # Le type "primary" met le bouton en rouge/orange selon le thème, "secondary" en gris/blanc.
         if st.button(label_fav, key="btn_fav", type="primary" if is_fav else "secondary", help="Ajouter/retirer des favoris"):
             toggle_favorite()
             save_session_to_disk()
             rerun()
 
-    # 2. La Carte (Juste en dessous, sans marge négative bizarre)
+    # 2. La Carte (Juste en dessous)
     st.markdown(f"""
     <div class="flashcard-content">
       <div class="mode-indicator">{mode_text}</div>
@@ -547,7 +558,7 @@ with st.container():
     </div>
     """, unsafe_allow_html=True)
 
-    # 3. Les Boutons d’action (Révéler / Choix)
+    # 3. Les Boutons d’action (Révéler / Choix) - AVEC WRAPPER CLASSES POUR LE CSS
     if not st.session_state.revealed:
         # Conteneur "Révéler" collé
         st.markdown('<div class="reveal-btn">', unsafe_allow_html=True)
