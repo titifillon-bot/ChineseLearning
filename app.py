@@ -109,16 +109,6 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 .stProgress > div > div > div { height: 10px !important; }
 div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center; font-weight: 600; color: #6c757d; }
 
-/* --- BARRE DU HAUT (Retour/Fav/Reset) --- */
-div[data-testid="column"] .stButton button {
-    width: 100%;
-    border-radius: 12px;
-    font-weight: 700;
-    border-width: 2px;
-    padding: 0.5rem 1rem;
-    height: auto !important;
-}
-
 /* --- CARTE --- */
 .flashcard-content {
   background-color: #ffffff;
@@ -141,7 +131,7 @@ div[data-testid="column"] .stButton button {
 .answer-container { background-color: #f8f9fa; border-radius: 16px; padding: 10px 25px; margin-top: 10px; min-width: 60%; animation: fadeIn 0.3s ease-in; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* --- BOUTONS GÉANTS (Révéler / Choix) --- */
+/* --- BOUTONS GÉANTS (Révéler / Choix / Top) --- */
 
 /* 1. Zone Révéler (Bleu) */
 .area-reveal { margin-top: -10px !important; }
@@ -171,6 +161,25 @@ div[data-testid="column"] .stButton button {
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     border: 3px solid transparent !important;
     margin-top: 10px !important;
+}
+
+/* 3. Zone TOP (Précédent / Favoris) */
+.area-top .stButton button {
+    height: 300px !important;
+    width: 100% !important;
+    font-size: 30px !important;
+    font-weight: 800 !important;
+    border-radius: 16px !important;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    border: 3px solid transparent !important;
+    margin-top: 10px !important;
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%) !important;
+    color: #ffffff !important;
+}
+.area-top .stButton button:hover {
+    background: #ffffff !important;
+    color: #7f8c8d !important;
+    border: 3px solid #7f8c8d !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -207,39 +216,46 @@ if 'all_data' not in st.session_state:
             ("八", "bā", "Huit"),
         ],
         "41-50": [
-            ("尸", "shī", "Cadavre"), ("寸", "cùn", "Pouce"), ("山", "shān", "Montagne"),
-            ("攵", "pū", "Frapper"), ("彳", "chì", "Pas (gauche)"), ("十", "shí", "Dix"),
-            ("工", "gōng", "Travail"), ("方", "fāng", "Carré"), ("门", "mén", "Porte"),
-            ("饣", "shí", "Manger"),
+            ("尸", "shī", "Cadavre"), ("寸", "cùn", "Pouce"),
+            ("山", "shān", "Montagne"), ("攵", "pū", "Frapper"),
+            ("彳", "chì", "Pas (gauche)"), ("十", "shí", "Dix"),
+            ("工", "gōng", "Travail"), ("方", "fāng", "Carré"),
+            ("门", "mén", "Porte"), ("饣", "shí", "Manger"),
         ],
         "51-60": [
-            ("欠", "qiàn", "Bâiller"), ("儿", "ér", "Fils"), ("冫", "bīng", "Glace"),
-            ("子", "zǐ", "Enfant"), ("疒", "chuáng", "Maladie"), ("隹", "zhuī", "Oiseau"),
-            ("斤", "jīn", "Hache"), ("亠", "tóu", "Couvercle"), ("王", "wáng", "Roi"),
-            ("白", "bái", "Blanc"),
+            ("欠", "qiàn", "Bâiller"), ("儿", "ér", "Fils"),
+            ("冫", "bīng", "Glace"), ("子", "zǐ", "Enfant"),
+            ("疒", "chuáng", "Maladie"), ("隹", "zhuī", "Oiseau"),
+            ("斤", "jīn", "Hache"), ("亠", "tóu", "Couvercle"),
+            ("王", "wáng", "Roi"), ("白", "bái", "Blanc"),
         ],
         "61-70": [
-            ("立", "lì", "Debout"), ("羊", "yáng", "Mouton"), ("艮", "gěn", "Montagne/Tenace"),
-            ("冖", "mì", "Toit"), ("厂", "chǎng", "Usine"), ("皿", "mǐn", "Récipient"),
-            ("礻", "shì", "Esprit"), ("穴", "xué", "Trou"), ("走", "zǒu", "Marcher"),
-            ("雨", "yǔ", "Pluie"),
+            ("立", "lì", "Debout"), ("羊", "yáng", "Mouton"),
+            ("艮", "gěn", "Montagne/Tenace"), ("冖", "mì", "Toit"),
+            ("厂", "chǎng", "Usine"), ("皿", "mǐn", "Récipient"),
+            ("礻", "shì", "Esprit"), ("穴", "xué", "Trou"),
+            ("走", "zǒu", "Marcher"), ("雨", "yǔ", "Pluie"),
         ],
         "71-80": [
-            ("囗", "wéi", "Enceinte"), ("小", "xiǎo", "Petit"), ("戈", "gē", "Hallebarde"),
-            ("几", "jī", "Combien/Table"), ("舌", "shé", "Langue"), ("干", "gān", "Sec"),
-            ("殳", "shū", "Lance"), ("夕", "xī", "Coucher soleil"), ("止", "zhǐ", "Arrêter"),
-            ("牛", "niú", "Vache"),
+            ("囗", "wéi", "Enceinte"), ("小", "xiǎo", "Petit"),
+            ("戈", "gē", "Hallebarde"), ("几", "jī", "Combien/Table"),
+            ("舌", "shé", "Langue"), ("干", "gān", "Sec"),
+            ("殳", "shū", "Lance"), ("夕", "xī", "Coucher soleil"),
+            ("止", "zhǐ", "Arrêter"), ("牛", "niú", "Vache"),
         ],
         "81-90": [
-            ("皮", "pí", "Peau"), ("耳", "ěr", "Oreille"), ("辛", "xīn", "Amer"),
-            ("酉", "yǒu", "Vin"), ("青", "qīng", "Bleu-Vert"), ("鸟", "niǎo", "Oiseau"),
-            ("弓", "gōng", "Arc"), ("厶", "sī", "Privé"), ("户", "hù", "Foyer"),
+            ("皮", "pí", "Peau"), ("耳", "ěr", "Oreille"),
+            ("辛", "xīn", "Amer"), ("酉", "yǒu", "Vin"),
+            ("青", "qīng", "Bleu-Vert"), ("鸟", "niǎo", "Oiseau"),
+            ("弓", "gōng", "Arc"), ("厶", "sī", "Privé"),
+            ("户", "hù", "Foyer"),
         ],
         "91-100": [
-            ("羽", "yǔ", "Plume"), ("舟", "zhōu", "Bateau"), ("里", "lǐ", "Intérieur"),
-            ("匕", "bǐ", "Cuillère"), ("夂", "suī", "Aller doucement"), ("见", "jiàn", "Voir"),
-            ("卩", "jié", "Sceau"), ("罒", "wǎng", "Filet"), ("士", "shì", "Erudit"),
-            ("勹", "bāo", "Envelopper"),
+            ("羽", "yǔ", "Plume"), ("舟", "zhōu", "Bateau"),
+            ("里", "lǐ", "Intérieur"), ("匕", "bǐ", "Cuillère"),
+            ("夂", "suī", "Aller doucement"), ("见", "jiàn", "Voir"),
+            ("卩", "jié", "Sceau"), ("罒", "wǎng", "Filet"),
+            ("士", "shì", "Erudit"), ("勹", "bāo", "Envelopper"),
         ]
     }
 
@@ -361,13 +377,17 @@ def undo_last_action():
         save_session_to_disk()
 
 def next_card():
+    """Passe à la carte suivante OU déclenche le reset auto si 100% atteint."""
     st.session_state.revealed = False
-    if len(st.session_state.deck) > 0:
+    if st.session_state.deck:
+        # Il reste des cartes → on passe à la suivante
         st.session_state.current_card = st.session_state.deck[0]
+        save_session_to_disk()
     else:
-        st.session_state.current_card = None
-        st.session_state.game_active = False
-    save_session_to_disk()
+        # 100% atteint → reset automatique
+        # st.toast("🎉 100% de réussite — réinitialisation…", icon="✅")  # optionnel
+        reset_session()
+        return
 
 def mark_memorized():
     push_history()
@@ -446,6 +466,7 @@ with st.sidebar:
                     rerun()
         else:
             st.caption("Aucun favori pour l'instant.")
+
     st.download_button(
         "⬇️ Télécharger favoris.json",
         data=json.dumps(st.session_state.favorites, ensure_ascii=False, indent=2),
@@ -453,6 +474,7 @@ with st.sidebar:
         mime="application/json",
         use_container_width=True
     )
+
     up_fav = st.file_uploader("📥 Importer favoris.json", type=["json"], key="uploader_favs")
     if up_fav is not None:
         try:
@@ -484,6 +506,7 @@ with st.sidebar:
         mime="application/json",
         use_container_width=True
     )
+
     up_sess = st.file_uploader("📥 Importer session.json", type=["json"], key="uploader_session")
     if up_sess is not None:
         try:
@@ -518,6 +541,7 @@ if not st.session_state.game_active:
     st.stop()
 
 if st.session_state.current_card is None:
+    # Avec le reset auto, on ne devrait plus passer ici.
     st.balloons()
     st.markdown("""
         <div style='text-align: center; padding: 50px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);'>
@@ -568,34 +592,38 @@ elif mode == 5:  # Pinyin → Symbole
     a_html = format_answer((char, "huge-char"), (fr, "huge-fr"))
 elif mode == 6:  # Symbole → Pinyin
     q_html = f'<div class="huge-char">{char}</div>'
-    a_html = format_answer((pinyin, "huge-pinyin"), (fr, "huge-fr"))
+    a_html = format_answer((pinyin, "huge-pinyin"))  # seulement pinyin
 
 # --- AFFICHAGE PRINCIPAL ---
 with st.container():
-    # 1. Barre du HAUT
-    c_back, c_spacer, c_fav, c_reset = st.columns([1, 2, 1, 1])
+    # (NOUVEAU) 0. Boutons TOP GÉANTS : Précédent / Favoris (largeur et hauteur comme À revoir / Mémorisé)
+    st.markdown('<div class="area-top">', unsafe_allow_html=True)
+    c_top_back, c_top_fav = st.columns(2, gap="small")
 
-    with c_back:
+    with c_top_back:
         if st.session_state.history:
-            if st.button("⬅️ Retour", key="btn_back", help="Annuler la dernière action"):
+            if st.button("⬅️ Précédent", key="btn_back_big", use_container_width=True, help="Annuler la dernière action"):
                 undo_last_action()
                 rerun()
         else:
-            st.markdown('<button style="width:100%; background:#f0f2f5; border:2px solid #e0e0e0; color:#a0a0a0; padding:0.5rem; border-radius:12px; font-weight:700; cursor:not-allowed;">⬅️ Retour</button>', unsafe_allow_html=True)
+            # Bouton désactivé visuel, grande taille
+            st.markdown(
+                '<button style="height:300px;width:100%;font-size:30px;font-weight:800;'
+                'border-radius:16px;background:#ecf0f1;color:#a0a0a0;border:3px solid #ecf0f1;cursor:not-allowed;">'
+                '⬅️ Précédent</button>',
+                unsafe_allow_html=True
+            )
 
-    with c_fav:
+    with c_top_fav:
         is_fav = is_current_favorite()
         label_fav = "★ Retirer" if is_fav else "⭐ Favoris"
-        if st.button(label_fav, key="btn_fav", type="primary" if is_fav else "secondary", help="Ajouter/retirer des favoris"):
+        if st.button(label_fav, key="btn_fav_big", use_container_width=True, help="Ajouter/retirer des favoris"):
             toggle_favorite()
             save_session_to_disk()
             rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    with c_reset:
-        if st.button("♻️ Reset", key="btn_reset", help="Réinitialiser la session courante (favoris et réglages conservés)"):
-            reset_session()
-
-    # 2. La Carte
+    # 1. La Carte
     st.markdown(f"""
     <div class="flashcard-content">
       <div class="mode-indicator">{mode_text}</div>
@@ -606,7 +634,7 @@ with st.container():
     </div>
     """, unsafe_allow_html=True)
 
-    # 3. Les Boutons d’action GÉANTS
+    # 2. Les Boutons d’action GÉANTS
     if not st.session_state.revealed:
         # WRAPPER POUR RÉVÉLER
         st.markdown('<div class="area-reveal">', unsafe_allow_html=True)
@@ -648,7 +676,7 @@ with st.container():
                 save_session_to_disk()
                 rerun()
         with c_ok:
-            if st.button("✅ Mémorisé", key="btn_ok", use_container_width=True):
+           ey="btn_ok", use_container_width=True):
                 mark_memorized()
                 save_session_to_disk()
                 rerun()
