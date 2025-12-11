@@ -23,14 +23,20 @@ st.markdown("""
         background-color: #f0f2f6;
         padding: 20px;
         border-radius: 10px;
+        margin-bottom: 20px;
     }
-    /* Style des boutons personnalisés via CSS */
+    
+    /* === STYLE DES BOUTONS === */
     div.stButton > button {
-        width: 100%;
-        height: 80px;
-        font-size: 24px;
+        width: 100% !important;  /* Force la largeur maximale */
+        height: 100px;           /* Hauteur confortable pour le pouce */
+        font-size: 28px;         /* Texte plus gros */
         font-weight: bold;
+        border-radius: 12px;     /* Coins arrondis */
     }
+    
+    /* Couleur spécifique pour le bouton À Revoir (Rouge) si besoin d'override */
+    /* Streamlit gère ça via les keys, mais on assure la taille ici */
     </style>
     """, unsafe_allow_html=True)
 
@@ -123,9 +129,7 @@ if 'selected_modes_keys' not in st.session_state:
 # --- LOGIQUE DU JEU ---
 def start_game():
     deck = []
-    # Récupérer les séries cochées
     series_to_use = [k for k in st.session_state.all_data.keys() if st.session_state.get(f"chk_serie_{k}", False)]
-    # Récupérer les modes cochés
     modes_to_use = [k for k in GAME_MODES.keys() if st.session_state.get(f"chk_mode_{k}", False)]
     
     if not series_to_use:
@@ -157,13 +161,13 @@ def next_card():
 
 def mark_memorized():
     if st.session_state.deck:
-        st.session_state.deck.pop(0) # On enlève la carte
+        st.session_state.deck.pop(0) 
     next_card()
 
 def mark_review():
     if st.session_state.deck:
         card = st.session_state.deck.pop(0)
-        st.session_state.deck.append(card) # On remet à la fin
+        st.session_state.deck.append(card)
     next_card()
 
 def toggle_all_series(state):
@@ -184,12 +188,10 @@ st.title("🀄 Radicaux Flashcards")
 with st.sidebar:
     st.header("1. CHOIX DES SÉRIES")
     
-    # Boutons Tout cocher / Décocher
     c1, c2 = st.columns(2)
     if c1.button("✅ Tous", key="all_s"): toggle_all_series(True)
     if c2.button("❌ Aucun", key="no_s"): toggle_all_series(False)
     
-    # Génération des Checkboxes Séries
     sorted_keys = sorted(list(st.session_state.all_data.keys()), key=lambda x: int(x.split('-')[0]))
     for key in sorted_keys:
         st.checkbox(f"Série {key}", key=f"chk_serie_{key}")
@@ -197,14 +199,12 @@ with st.sidebar:
     st.markdown("---")
     st.header("2. CHOIX DES MODES")
     
-    # Boutons Tout cocher / Décocher Modes
     c3, c4 = st.columns(2)
     if c3.button("✅ Tous", key="all_m"): toggle_all_modes(True)
     if c4.button("❌ Aucun", key="no_m"): toggle_all_modes(False)
     
-    # Génération des Checkboxes Modes
     for m_id, m_name in GAME_MODES.items():
-        st.checkbox(m_name, key=f"chk_mode_{m_id}", value=True) # Par défaut coché
+        st.checkbox(m_name, key=f"chk_mode_{m_id}", value=True)
 
     st.markdown("---")
     if st.button("🚀 LANCER LE JEU", type="primary"):
@@ -218,12 +218,6 @@ with st.sidebar:
 
 if not st.session_state.game_active:
     st.info("👈 Configure tes listes à gauche et clique sur **LANCER LE JEU**.")
-    st.markdown("""
-    **Instructions :**
-    1. Coche les séries que tu veux apprendre.
-    2. Coche les types de questions.
-    3. Lance le jeu !
-    """)
     st.stop()
 
 if st.session_state.current_card is None:
@@ -239,10 +233,8 @@ item, mode = st.session_state.current_card
 char, pinyin, fr = item
 mode_text = GAME_MODES[mode]
 
-# Indicateur discret du mode
 st.caption(f"Question : {mode_text}")
 
-# Préparation contenu
 question_html = ""
 answer_html = ""
 
@@ -271,26 +263,25 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # 2. LOGIQUE BOUTONS
 if not st.session_state.revealed:
-    # Bouton unique RÉVÉLER
+    # Bouton unique RÉVÉLER (Largeur 100% auto via CSS)
     if st.button("👁️ RÉVÉLER LA RÉPONSE"):
         st.session_state.revealed = True
         st.rerun()
 else:
     # Affichage RÉPONSE
     st.markdown(f'<div class="answer-text">{answer_html}</div>', unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
     
-    # Deux colonnes pour les boutons de validation
-    col_left, col_right = st.columns(2)
+    # Deux colonnes avec un espace MINIMUM (gap="small") pour maximiser la largeur
+    c_left, c_right = st.columns([1, 1], gap="small")
     
-    with col_left:
-        # Bouton ROUGE (via type secondary + emoji ou CSS, ici simple pour la clarté)
+    with c_left:
+        # Bouton ROUGE
         if st.button("❌ À REVOIR", key="btn_review"):
             mark_review()
             st.rerun()
             
-    with col_right:
-        # Bouton VERT (type primary = couleur accentuée du thème)
+    with c_right:
+        # Bouton VERT
         if st.button("✅ MÉMORISÉ", type="primary", key="btn_ok"):
             mark_memorized()
             st.rerun()
