@@ -363,7 +363,7 @@ def format_answer(top, bottom=None):
         html += f'<div class="{bottom[1]}">{bottom[0]}</div>'
     html += '</div>'
     return html
-
+ 
 if mode == 1: # Pinyin → FR
     q_html = f'<div class="huge-pinyin">{pinyin}</div>'
     a_html = format_answer((char, "huge-char"), (fr, "huge-fr"))
