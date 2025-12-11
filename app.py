@@ -30,7 +30,10 @@ def load_favorites_from_disk():
 
 def save_favorites_to_disk():
     try:
-        FAV_FILE.write_text(json.dumps(st.session_state.favorites, ensure_ascii=False, indent=2), encoding="utf-8")
+        FAV_FILE.write_text(
+            json.dumps(st.session_state.favorites, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
     except Exception as e:
         st.sidebar.warning(f"Favoris: impossible d'écrire: {e}")
 
@@ -69,8 +72,14 @@ def save_session_to_disk():
             "game_active": st.session_state.get("game_active", False),
             "total_cards_initial": st.session_state.get("total_cards_initial", 0),
             "use_favorites_only": st.session_state.get("use_favorites_only", False),
-            "series_flags": {f"chk_serie_{k}": st.session_state.get(f"chk_serie_{k}", True) for k in st.session_state.all_data.keys()},
-            "mode_flags": {f"chk_mode_{k}": st.session_state.get(f"chk_mode_{k}", True) for k in GAME_MODES.keys()},
+            "series_flags": {
+                f"chk_serie_{k}": st.session_state.get(f"chk_serie_{k}", True)
+                for k in st.session_state.all_data.keys()
+            },
+            "mode_flags": {
+                f"chk_mode_{k}": st.session_state.get(f"chk_mode_{k}", True)
+                for k in GAME_MODES.keys()
+            },
         }
         SESSION_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     except Exception as e:
@@ -224,8 +233,14 @@ if 'all_data' not in st.session_state:
         ]
     }
 
-GAME_MODES = { 1: "Pinyin → FR", 2: "FR → Pinyin", 3: "FR → Symbole",
-               4: "Symbole → FR", 5: "Pinyin → Symbole", 6: "Symbole → Pinyin" }
+GAME_MODES = {
+    1: "Pinyin → FR",
+    2: "FR → Pinyin",
+    3: "FR → Symbole",
+    4: "Symbole → FR",
+    5: "Pinyin → Symbole",
+    6: "Symbole → Pinyin"
+}
 
 # --- STATE ---
 if 'deck' not in st.session_state: st.session_state.deck = []
@@ -244,9 +259,11 @@ load_session_from_disk(show_toast=False)
 
 # init checkboxes
 for k in st.session_state.all_data.keys():
-    if f"chk_serie_{k}" not in st.session_state: st.session_state[f"chk_serie_{k}"] = True
+    if f"chk_serie_{k}" not in st.session_state:
+        st.session_state[f"chk_serie_{k}"] = True
 for k in GAME_MODES.keys():
-    if f"chk_mode_{k}" not in st.session_state: st.session_state[f"chk_mode_{k}"] = True
+    if f"chk_mode_{k}" not in st.session_state:
+        st.session_state[f"chk_mode_{k}"] = True
 
 # --- LOGIC ---
 def toggle_all_series(state: bool):
@@ -258,16 +275,20 @@ def toggle_all_modes(state: bool):
         st.session_state[f"chk_mode_{k}"] = state
 
 def is_current_favorite() -> bool:
-    if st.session_state.current_card is None: return False
+    if st.session_state.current_card is None:
+        return False
     (char, pinyin, fr), _ = st.session_state.current_card
     return any(f["char"] == char and f["pinyin"] == pinyin and f["fr"] == fr for f in st.session_state.favorites)
 
 def toggle_favorite():
-    if st.session_state.current_card is None: return
+    if st.session_state.current_card is None:
+        return
     (char, pinyin, fr), _ = st.session_state.current_card
     if is_current_favorite():
-        st.session_state.favorites = [f for f in st.session_state.favorites
-                                      if not (f["char"] == char and f["pinyin"] == pinyin and f["fr"] == fr)]
+        st.session_state.favorites = [
+            f for f in st.session_state.favorites
+            if not (f["char"] == char and f["pinyin"] == pinyin and f["fr"] == fr)
+        ]
         st.toast("🗑️ Retiré des favoris", icon="🗑️")
     else:
         st.session_state.favorites.append({"char": char, "pinyin": pinyin, "fr": fr})
@@ -290,7 +311,9 @@ def start_game():
             for m in modes_to_use:
                 deck.append((item, m))
     else:
-        series_to_use = [k for k in st.session_state.all_data.keys() if st.session_state.get(f"chk_serie_{k}", True)]
+        series_to_use = [
+            k for k in st.session_state.all_data.keys() if st.session_state.get(f"chk_serie_{k}", True)
+        ]
         if not series_to_use:
             st.sidebar.error("⚠️ Choisis au moins une série !")
             return
@@ -338,7 +361,8 @@ def next_card():
 
 def mark_memorized():
     push_history()
-    if st.session_state.deck: st.session_state.deck.pop(0)
+    if st.session_state.deck:
+        st.session_state.deck.pop(0)
     next_card()
 
 def mark_review():
@@ -348,10 +372,14 @@ def mark_review():
         st.session_state.deck.append(card)
     next_card()
 
-# --- RESET (ne touche pas aux favoris) ---
+# --- RESET (ne touche pas aux favoris ni aux cases) ---
 def reset_session():
-    """Réinitialise complètement la session en cours, sans toucher aux favoris."""
-    # Purge des états principaux
+    """Réinitialise la session en cours SANS modifier:
+       - le mode Favoris (use_favorites_only)
+       - l'état des checkboxes Séries (chk_serie_*)
+       - l'état des checkboxes Modes (chk_mode_*)
+       - la liste des favoris ou favoris.json
+    """
     st.session_state.deck = []
     st.session_state.current_card = None
     st.session_state.revealed = False
@@ -360,22 +388,13 @@ def reset_session():
     st.session_state.history = []
     st.session_state._toast_restored_shown = False
 
-    # Sécurité: remet le mode 'Favoris uniquement' à False
-    st.session_state.use_favorites_only = False
-
-    # Remet les cases Séries et Modes à True (valeurs par défaut)
-    for k in st.session_state.all_data.keys():
-        st.session_state[f"chk_serie_{k}"] = True
-    for k in GAME_MODES.keys():
-        st.session_state[f"chk_mode_{k}"] = True
-
-    # Vide proprement le fichier de session
+    # Vide proprement le fichier de session pour repartir sur une base saine
     try:
         SESSION_FILE.write_text(json.dumps({}, indent=2), encoding="utf-8")
     except Exception as e:
         st.sidebar.warning(f"Session: impossible d'écrire: {e}")
 
-    st.toast("♻️ Session réinitialisée.", icon="✅")
+    st.toast("♻️ Session réinitialisée (favoris et réglages conservés).", icon="✅")
     rerun()
 
 # --- SIDEBAR ---
@@ -417,9 +436,13 @@ with st.sidebar:
                     rerun()
         else:
             st.caption("Aucun favori pour l'instant.")
-    st.download_button("⬇️ Télécharger favoris.json",
-                       data=json.dumps(st.session_state.favorites, ensure_ascii=False, indent=2),
-                       file_name="favoris.json", mime="application/json", use_container_width=True)
+    st.download_button(
+        "⬇️ Télécharger favoris.json",
+        data=json.dumps(st.session_state.favorites, ensure_ascii=False, indent=2),
+        file_name="favoris.json",
+        mime="application/json",
+        use_container_width=True
+    )
     up_fav = st.file_uploader("📥 Importer favoris.json", type=["json"], key="uploader_favs")
     if up_fav is not None:
         try:
@@ -444,9 +467,13 @@ with st.sidebar:
         load_session_from_disk(show_toast=True)
         rerun()
 
-    st.download_button("⬇️ Télécharger session.json",
-                       data=SESSION_FILE.read_text(encoding="utf-8") if SESSION_FILE.exists() else json.dumps({}, indent=2),
-                       file_name="session.json", mime="application/json", use_container_width=True)
+    st.download_button(
+        "⬇️ Télécharger session.json",
+        data=SESSION_FILE.read_text(encoding="utf-8") if SESSION_FILE.exists() else json.dumps({}, indent=2),
+        file_name="session.json",
+        mime="application/json",
+        use_container_width=True
+    )
     up_sess = st.file_uploader("📥 Importer session.json", type=["json"], key="uploader_session")
     if up_sess is not None:
         try:
@@ -463,7 +490,6 @@ with st.sidebar:
     st.subheader("♻️ Réinitialisation")
     cols_r = st.columns(2)
     cols_r[0].button("🔄 Reset session", use_container_width=True, on_click=reset_session)
-    # Place réservée si tu veux plus tard ajouter un 'Reset complet' (favoris + session)
     cols_r[1].markdown("&nbsp;")
 
     st.markdown("---")
@@ -556,7 +582,7 @@ with st.container():
             rerun()
 
     with c_reset:
-        if st.button("♻️ Reset", key="btn_reset", help="Réinitialiser la session courante (favoris conservés)"):
+        if st.button("♻️ Reset", key="btn_reset", help="Réinitialiser la session courante (favoris et réglages conservés)"):
             reset_session()
 
     # 2. La Carte
@@ -583,13 +609,12 @@ with st.container():
         # WRAPPER POUR CHOIX
         st.markdown('<div class="area-choices">', unsafe_allow_html=True)
 
-        # Injection CSS spécifique aux couleurs ici pour être sûr de surcharger
+        # Injection CSS spécifique aux couleurs des boutons Choix
         st.markdown("""
         <style>
         /* Force couleur Rouge pour colonne 1 de area-choices */
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-            color: #ffffff !important;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b  color: #ffffff !important;
         }
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
             background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
