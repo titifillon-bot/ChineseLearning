@@ -49,7 +49,7 @@ st.markdown(
         margin-top: 25px;
         
         /* HAUTEUR FIXE ET CENTRAGE */
-        height: 450px !important;       
+        height: 450px !important;        
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -115,13 +115,17 @@ st.markdown(
         border-radius: 0 0 24px 24px !important; /* Arrondi bas pour fermer la forme */
         
         margin-top: -24px !important;  /* Remonte pour coller à la carte */
-        height: 120px !important;      /* Plus haut */
-        font-size: 32px !important;    /* Texte TRÈS GROS */
+        
+        /* MODIFICATIONS TAILLE ET FONT */
+        width: 100% !important;
+        height: 160px !important;      /* Plus haut (+33%) */
+        font-size: 45px !important;    /* Texte TRÈS GROS */
+        
         font-weight: 900 !important;
         z-index: 0;
     }
 
-    /* --- BOUTONS CHOIX (Validé / À revoir) --- */
+    /* --- BOUTONS CHOIX --- */
     .main div[data-testid="column"] .stButton button {
          border-radius: 16px !important;
          height: 100px !important;
