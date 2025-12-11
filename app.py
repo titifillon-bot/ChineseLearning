@@ -1,3 +1,15 @@
+Voici le code **complet et final**.
+
+J'ai intégré toutes tes demandes :
+
+1.  **Taille fixe de la carte** (fini les sauts de page).
+2.  **Centrage vertical** parfait du contenu.
+3.  **Correction du bug `</div>`** (l'affichage de code gris).
+4.  **Bouton "Révéler"** : Il est maintenant **collé** au bas de la carte, fait la **même largeur**, et le texte est **beaucoup plus gros**.
+
+Tu n'as qu'à copier-coller tout ceci dans ton fichier `app.py`.
+
+```python
 import streamlit as st
 import random
 
@@ -12,7 +24,7 @@ def rerun():
         st.experimental_rerun()
 
 # ==============================================================================
-# --- NOUVEAU CSS MODERNE (MODIFIÉ POUR TAILLE FIXE) ---
+# --- CSS AVANCÉ (Carte Fixe + Bouton "Glued") ---
 # ==============================================================================
 st.markdown(
     """
@@ -20,20 +32,18 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
     html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 
-    /* --- 1. FOND GÉNÉRAL ET CONTAINERS --- */
-    .stApp {
-        background-color: #f0f2f5;
-    }
-
+    /* --- 1. LAYOUT PRINCIPAL --- */
+    .stApp { background-color: #f0f2f5; }
+    
     .main .block-container {
         max-width: 900px;
         padding-top: 2rem;
         padding-bottom: 5rem;
     }
 
-    .stProgress > div > div > div {
-        height: 10px !important;
-    }
+    /* Cache la barre de progression vide */
+    .stProgress > div > div > div { height: 10px !important; }
+    
     div[data-testid="stCaptionContainer"] {
         margin-bottom: -20px;
         text-align: center;
@@ -41,40 +51,37 @@ st.markdown(
         color: #6c757d;
     }
 
-    /* --- 2. LA CARTE (TAILLE FIXE MAINTENANT) --- */
+    /* --- 2. LA CARTE (Fixe) --- */
     .flashcard-content {
         background-color: #ffffff;
-        padding: 20px 30px; /* Padding un peu réduit */
-        border-radius: 24px 24px 0 0;
+        padding: 20px 30px;
+        border-radius: 24px 24px 0 0; /* Arrondi seulement en haut */
         box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
         text-align: center;
         margin-top: 25px;
-        border-bottom: 2px solid #f0f2f5;
         
-        /* --- MODIFICATION CLÉ ICI : HAUTEUR FIXE --- */
-        height: 450px !important;       /* Hauteur forcée */
-        display: flex;                  /* Active Flexbox */
-        flex-direction: column;         /* Colonne verticale */
-        justify-content: center;        /* Centre tout verticalement */
-        align-items: center;            /* Centre tout horizontalement */
-        overflow: hidden;               /* Coupe ce qui dépasse */
+        /* HAUTEUR FIXE ET CENTRAGE */
+        height: 450px !important;       
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
         position: relative;
+        z-index: 1; 
     }
 
-    /* --- 3. TYPOGRAPHIE DE LA CARTE --- */
+    /* --- 3. TYPO INTERNE --- */
     .mode-indicator {
-        position: absolute;             /* Fixe le titre en haut de la carte */
+        position: absolute;
         top: 30px;
-        left: 0; 
-        right: 0;
+        left: 0; right: 0;
         font-size: 16px;
         text-transform: uppercase;
         letter-spacing: 1.5px;
         color: #adb5bd;
         font-weight: 700;
     }
-
-    /* Conteneur pour grouper Question/Réponse au centre */
     .content-wrapper {
         display: flex;
         flex-direction: column;
@@ -82,83 +89,70 @@ st.markdown(
         justify-content: center;
         width: 100%;
     }
+    .huge-char { font-size: 130px; line-height: 1.2; color: #2c3e50; font-weight: 900; margin: 0; }
+    .huge-pinyin { font-size: 50px; color: #3498db; font-weight: 700; margin: 5px 0; }
+    .huge-fr { font-size: 35px; color: #505c6e; font-weight: 600; margin: 5px 0; }
 
-    .huge-char {
-        font-size: 130px; /* Légèrement réduit pour bien tenir */
-        line-height: 1.2;
-        color: #2c3e50;
-        font-weight: 900;
-        margin: 0;
-    }
-    .huge-pinyin {
-        font-size: 50px;
-        color: #3498db;
-        font-weight: 700;
-        margin: 5px 0;
-    }
-    .huge-fr {
-        font-size: 35px;
-        color: #505c6e;
-        font-weight: 600;
-        margin: 5px 0;
-    }
-
-    /* --- 4. ZONE RÉPONSE --- */
     .answer-container {
         background-color: #f8f9fa;
         border-radius: 16px;
-        padding: 15px 25px;
-        margin-top: 20px;
+        padding: 10px 25px;
+        margin-top: 15px;
         min-width: 60%;
         animation: fadeIn 0.3s ease-in;
     }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     /* ========================================================================
-       --- 5. STYLISATION DES BOUTONS ---
+       --- 4. STYLISATION DES BOUTONS ---
     ======================================================================== */
 
     .main .stButton button {
         width: 100%;
-        height: 90px !important;
-        font-size: 24px !important;
-        font-weight: 800 !important;
         border: none !important;
         transition: all 0.2s ease !important;
         box-shadow: 0 10px 20px rgba(0,0,0,0.08);
         text-transform: uppercase;
         letter-spacing: 1px;
     }
-
+    
     .main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
     .main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
 
-    /* Bouton RÉVÉLER (Bleu) */
+    /* --- LE BOUTON "RÉVÉLER" (Magie CSS ici) --- */
+    /* Cible le bouton qui est seul (hors colonnes) */
     .main div:not([data-testid="column"]) > .stButton button {
         background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
         color: white !important;
-        border-radius: 0 0 24px 24px !important; /* Collé à la carte */
-        margin-top: -5px; 
+        border-radius: 0 0 24px 24px !important; /* Arrondi bas pour fermer la forme */
+        
+        margin-top: -24px !important;  /* Remonte pour coller à la carte */
+        height: 120px !important;      /* Plus haut */
+        font-size: 32px !important;    /* Texte TRÈS GROS */
+        font-weight: 900 !important;
+        z-index: 0;
     }
 
-    /* Boutons de VALIDATION (Séparés) */
+    /* --- BOUTONS CHOIX (Validé / À revoir) --- */
     .main div[data-testid="column"] .stButton button {
          border-radius: 16px !important;
          height: 100px !important;
-         font-size: 26px !important;
-         margin-top: 20px; /* Espace fixe */
+         font-size: 24px !important;
+         font-weight: 800 !important;
+         margin-top: 20px; 
     }
 
+    /* Couleurs des choix */
     div[data-testid="column"]:nth-of-type(1) .stButton button {
         background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
         color: white !important;
     }
-
     div[data-testid="column"]:nth-of-type(2) .stButton button {
         background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
         color: white !important;
     }
 
+    /* Sidebar propre */
     .css-1d391kg { background-color: #ffffff; }
     .st-emotion-cache-16txtl3 { padding: 2rem 1rem; }
     </style>
@@ -398,10 +392,8 @@ elif mode == 6: # Symbole → Pinyin
 
 # ================= AFFICHAGE DE LA CARTE =================
 with st.container():
-    # 1. Le contenu HTML
-    # IMPORTANT : Les chaînes f-string ci-dessous sont collées à gauche 
-    # pour éviter que Streamlit ne crée des blocs de code gris indésirables (</div>).
-    
+    # 1. Le contenu HTML (fixe)
+    # L'alignement tout à gauche ici est crucial pour éviter le bug </div>
     st.markdown(f"""
 <div class="flashcard-content">
 <div class="mode-indicator">{mode_text}</div>
@@ -414,10 +406,12 @@ with st.container():
 
     # 2. Zone des boutons d'action
     if not st.session_state.revealed:
+        # Bouton Révéler (style spécifique CSS)
         if st.button("👁️ Révéler la réponse", key="btn_reveal"):
             st.session_state.revealed = True
             rerun()
     else:
+        # Boutons Choix
         c_ko, c_ok = st.columns(2, gap="medium")
         with c_ko:
             if st.button("❌ À revoir", key="btn_ko"):
@@ -427,3 +421,4 @@ with st.container():
             if st.button("✅ Mémorisé", key="btn_ok"):
                 mark_memorized()
                 rerun()
+```
