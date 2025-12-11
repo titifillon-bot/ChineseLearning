@@ -1,9 +1,29 @@
 
 import streamlit as st
 import random
+import json
+from pathlib import Path
 
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Radicaux Chinois", layout="wide", initial_sidebar_state="expanded")
+
+# --- PERSISTENCE DES FAVORIS ---
+FAV_FILE = Path("favoris.json")
+
+def load_favorites_from_disk():
+    if FAV_FILE.exists():
+        try:
+            data = json.loads(FAV_FILE.read_text(encoding="utf-8"))
+            if isinstance(data, list):
+                st.session_state.favorites = data
+        except Exception as e:
+            st.sidebar.warning(f"Impossible de charger favoris.json : {e}")
+
+def save_favorites_to_disk():
+    try:
+        FAV_FILE.write_text(json.dumps(st.session_state.favorites, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as e:
+        st.sidebar.warning(f"Impossible d'écrire favoris.json : {e}")
 
 # --- FONCTION COMPATIBLE RERUN ---
 def rerun():
@@ -13,7 +33,7 @@ def rerun():
         st.experimental_rerun()
 
 # ==============================================================================
-# --- CSS AVANCÉ (Carte Fixe + Boutons collés/alignés) ---
+# --- CSS AVANCÉ (Carte Fixe + Boutons collés/alignés + Étoile Favori) ---
 # ==============================================================================
 st.markdown("""
 <style>
@@ -26,6 +46,7 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
     max-width: 900px;                /* largeur carte + boutons */
     padding-top: 2rem;
     padding-bottom: 5rem;
+    position: relative;              /* pour positionner le bouton étoile en absolu */
 }
 
 /* --- Progress bar --- */
@@ -50,6 +71,31 @@ div[data-testid="stCaptionContainer"] {
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     overflow: hidden; position: relative; z-index: 1;
     width: 100%; box-sizing: border-box;
+}
+
+/* --- Bouton étoile Favori (overlay en haut à droite de la carte) --- */
+.fav-btn-wrap {
+    position: absolute;
+    top: 35px;      /* ajuste si besoin */
+    right: 40px;    /* aligne au bord droit de la carte */
+    z-index: 3;
+}
+.fav-btn-wrap .stButton button {
+    background: #ffd54f !important; /* jaune doux */
+    color: #8d6e63 !important;      /* brun */
+    border-radius: 22px !important;
+    height: 44px !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    padding: 6px 14px !important;
+    border: 2px solid #ffca28 !important;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+.fav-btn-wrap .stButton button:hover {
+    background: #fff8e1 !important;
+    color: #e65100 !important;
+    border: 2px solid #f9a825 !important;
+    transform: translateY(-2px);
 }
 
 /* --- 3. TYPO INTERNE --- */
@@ -111,7 +157,7 @@ div[data-testid="stCaptionContainer"] {
 .choice-row [data-testid="column"] {
     padding-left: 0 !important; padding-right: 0 !important;
 }
-/* écart central (ajuste ici si besoin) */
+/* écart central : ajuste si besoin (2/4/6px) */
 .choice-row [data-testid="column"]:first-of-type { padding-right: 6px !important; }
 .choice-row [data-testid="column"]:last-of-type  { padding-left: 6px !important; }
 
@@ -125,8 +171,7 @@ div[data-testid="stCaptionContainer"] {
     border: 3px solid transparent !important; /* permettra l'effet outline au hover */
 }
 
-/* --- Styles par bouton --- */
-/* À revoir = rouge par défaut / texte blanc */
+/* À revoir = rouge par défaut / texte blanc ; hover blanc / outline rouge / texte rouge */
 .choice-row [data-testid="column"]:nth-of-type(1) .stButton button {
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
     color: #ffffff !important;
@@ -137,7 +182,7 @@ div[data-testid="stCaptionContainer"] {
     border: 3px solid #c0392b !important;
 }
 
-/* Mémorisé = vert par défaut / texte blanc */
+/* Mémorisé = vert par défaut / texte blanc ; hover blanc / outline vert / texte vert */
 .choice-row [data-testid="column"]:nth-of-type(2) .stButton button {
     background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
     color: #ffffff !important;
@@ -233,6 +278,11 @@ if 'current_card' not in st.session_state: st.session_state.current_card = None
 if 'revealed' not in st.session_state: st.session_state.revealed = False
 if 'game_active' not in st.session_state: st.session_state.game_active = False
 if 'total_cards_initial' not in st.session_state: st.session_state.total_cards_initial = 0
+if 'favorites' not in st.session_state: st.session_state.favorites = []
+if 'use_favorites_only' not in st.session_state: st.session_state.use_favorites_only = False
+
+# Charger automatiquement favoris depuis le disque si présent
+load_favorites_from_disk()
 
 for k in st.session_state.all_data.keys():
     if f"chk_serie_{k}" not in st.session_state: st.session_state[f"chk_serie_{k}"] = True
@@ -240,31 +290,56 @@ for k in GAME_MODES.keys():
     if f"chk_mode_{k}" not in st.session_state: st.session_state[f"chk_mode_{k}"] = True
 
 # --- FONCTIONS LOGIQUES ---
-def toggle_all_series(state):
+def toggle_all_series(state: bool):
     for k in st.session_state.all_data.keys():
         st.session_state[f"chk_serie_{k}"] = state
 
-def toggle_all_modes(state):
+def toggle_all_modes(state: bool):
     for k in GAME_MODES.keys():
         st.session_state[f"chk_mode_{k}"] = state
 
+def add_current_to_favorites():
+    if st.session_state.current_card is None:
+        return
+    item, mode = st.session_state.current_card
+    char, pinyin, fr = item
+    entry = {"char": char, "pinyin": pinyin, "fr": fr}
+    # éviter les doublons (même trio)
+    if not any(f["char"] == char and f["pinyin"] == pinyin and f["fr"] == fr for f in st.session_state.favorites):
+        st.session_state.favorites.append(entry)
+        save_favorites_to_disk()  # sauvegarde auto
+        st.toast("⭐ Ajouté aux favoris", icon="⭐")
+    else:
+        st.toast("Déjà présent dans les favoris", icon="⚠️")
+
 def start_game():
     deck = []
-    series_to_use = [k for k in st.session_state.all_data.keys() if st.session_state[f"chk_serie_{k}"]]
     modes_to_use = [k for k in GAME_MODES.keys() if st.session_state[f"chk_mode_{k}"]]
-    
-    if not series_to_use:
-        st.sidebar.error("⚠️ Choisis au moins une série !")
-        return
+
     if not modes_to_use:
         st.sidebar.error("⚠️ Choisis au moins un mode !")
         return
 
-    for serie_key in series_to_use:
-        for item in st.session_state.all_data[serie_key]:
+    if st.session_state.use_favorites_only:
+        if not st.session_state.favorites:
+            st.sidebar.error("⭐ Ajoute des favoris avant de lancer ce mode.")
+            return
+        # Construire le deck depuis favoris
+        for fav in st.session_state.favorites:
+            item = (fav["char"], fav["pinyin"], fav["fr"])
             for m in modes_to_use:
                 deck.append((item, m))
-    
+    else:
+        # Construire le deck depuis séries
+        series_to_use = [k for k in st.session_state.all_data.keys() if st.session_state[f"chk_serie_{k}"]]
+        if not series_to_use:
+            st.sidebar.error("⚠️ Choisis au moins une série !")
+            return
+        for serie_key in series_to_use:
+            for item in st.session_state.all_data[serie_key]:
+                for m in modes_to_use:
+                    deck.append((item, m))
+
     random.shuffle(deck)
     st.session_state.deck = deck
     st.session_state.total_cards_initial = len(deck)
@@ -281,7 +356,8 @@ def next_card():
         st.session_state.game_active = False
 
 def mark_memorized():
-    if st.session_state.deck: st.session_state.deck.pop(0)
+    if st.session_state.deck:
+        st.session_state.deck.pop(0)
     next_card()
 
 def mark_review():
@@ -294,6 +370,10 @@ def mark_review():
 
 with st.sidebar:
     st.header("🎴 Configuration")
+    st.subheader("Source du deck")
+    st.checkbox("🎯 Mode Favoris (utiliser uniquement les cartes favorites)", key="use_favorites_only")
+    st.caption(f"Favoris actuels : **{len(st.session_state.favorites)}**")
+
     st.subheader("1. Séries")
     c1, c2 = st.columns(2)
     c1.button("✅ Toutes", key="all_s", on_click=toggle_all_series, args=(True,))
@@ -301,7 +381,7 @@ with st.sidebar:
     
     sorted_keys = sorted(list(st.session_state.all_data.keys()), key=lambda x: int(x.split('-')[0]))
     for key in sorted_keys:
-        st.checkbox(f"Série {key}", key=f"chk_serie_{key}")
+        st.checkbox(f"Série {key}", key=f"chk_serie_{key}", disabled=st.session_state.use_favorites_only)
 
     st.markdown("---")
     st.subheader("2. Modes de jeu")
@@ -313,6 +393,36 @@ with st.sidebar:
         st.checkbox(m_name, key=f"chk_mode_{m_id}")
 
     st.markdown("---")
+    st.subheader("⭐ Favoris")
+    # Export favoris
+    st.download_button(
+        "💾 Télécharger favoris.json",
+        data=json.dumps(st.session_state.favorites, ensure_ascii=False, indent=2),
+        file_name="favoris.json",
+        mime="application/json",
+        use_container_width=True
+    )
+    # Import favoris
+    up = st.file_uploader("📥 Importer favoris.json", type=["json"])
+    if up is not None:
+        try:
+            imported = json.loads(up.read().decode("utf-8"))
+            if isinstance(imported, list) and all(set(x.keys()) >= {"char", "pinyin", "fr"} for x in imported):
+                st.session_state.favorites = imported
+                save_favorites_to_disk()
+                st.success(f"Import réussi : {len(imported)} favoris.")
+            else:
+                st.error("Format invalide : attendu une liste d'objets {char,pinyin,fr}.")
+        except Exception as e:
+            st.error(f"Erreur d'import : {e}")
+
+    # Purge favoris
+    if st.button("🗑️ Vider les favoris", use_container_width=True):
+        st.session_state.favorites = []
+        save_favorites_to_disk()
+        st.info("Favoris vidés.")
+
+    st.markdown("---")
     if st.button("🚀 LANCER UNE SESSION", type="primary", use_container_width=True):
         start_game()
         rerun()
@@ -322,7 +432,7 @@ if not st.session_state.game_active:
     st.markdown("""
         <div style='text-align: center; padding: 50px; color: #6c757d;'>
             <h1>👋 Bienvenue !</h1>
-            <p style='font-size: 1.2rem;'>Configure tes séries et tes modes dans la barre latérale,<br>puis clique sur "Lancer une session" pour commencer.</p>
+            <p style='font-size: 1.2rem;'>Configure ta source (Favoris ou Séries) et tes modes dans la barre latérale,<br>puis clique sur "Lancer une session" pour commencer.</p>
         </div>
     """, unsafe_allow_html=True)
     st.stop()
@@ -363,7 +473,7 @@ def format_answer(top, bottom=None):
         html += f'<div class="{bottom[1]}">{bottom[0]}</div>'
     html += '</div>'
     return html
- 
+
 if mode == 1: # Pinyin → FR
     q_html = f'<div class="huge-pinyin">{pinyin}</div>'
     a_html = format_answer((char, "huge-char"), (fr, "huge-fr"))
@@ -395,6 +505,13 @@ with st.container():
   </div>
 </div>
 """, unsafe_allow_html=True)
+
+    # Bouton étoile Favori (overlay)
+    st.markdown('<div class="fav-btn-wrap">', unsafe_allow_html=True)
+    if st.button("⭐ Favori", key="btn_fav"):
+        add_current_to_favorites()
+        rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Boutons
     if not st.session_state.revealed:
