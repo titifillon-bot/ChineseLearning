@@ -291,7 +291,7 @@ if 'all_data' not in st.session_state:
             ("广", "guǎng", "Toit pente (Rad53)"), ("田", "tián", "Champ (Rad102)"),
         ],
         "31-40": [
-            ("目", "mù", "Œil"), ("石", "shí", "Pierre"), ("礻", "yì", "Vêtement"),
+            ("目", "mù", "Œil"), ("石", "shí", "Pierre"), ("衤", "yì", "Vêtement"),
             ("足", "zú", "Pied"), ("马", "mǎ", "Cheval"), ("页", "yè", "Page"),
             ("巾", "jīn", "Tissu"), ("米", "mǐ", "Riz"), ("车", "chē", "Voiture"),
             ("八", "bā", "Huit"),
