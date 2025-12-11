@@ -12,139 +12,143 @@ def rerun():
         st.experimental_rerun()
 
 # ==============================================================================
-# --- CSS ROBUSTE (CORRIGÉ POUR ÉCRASER LES STYLES PAR DÉFAUT) ---
+# --- CSS AVANCÉ (Carte Fixe + Bouton "Glued") ---
 # ==============================================================================
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
+    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
+
+    /* --- 1. LAYOUT PRINCIPAL --- */
+    .stApp { background-color: #f0f2f5; }
     
-    /* Appliquer la police partout */
-    html, body, [class*="css"], button, input {
-        font-family: 'Nunito', sans-serif !important;
-    }
-
-    /* --- 1. FOND ET CONTENEUR --- */
-    .stApp {
-        background-color: #f0f2f5;
-    }
-
-    /* Centrer et limiter la largeur de la zone principale */
     .main .block-container {
-        max-width: 800px;  /* Largeur fixe idéale pour une flashcard */
+        max-width: 900px;
         padding-top: 2rem;
         padding-bottom: 5rem;
-        margin: 0 auto;    /* Centrage horizontal */
     }
 
-    /* --- 2. LA CARTE (Cadre blanc) --- */
+    /* Cache la barre de progression vide */
+    .stProgress > div > div > div { height: 10px !important; }
+    
+    div[data-testid="stCaptionContainer"] {
+        margin-bottom: -20px;
+        text-align: center;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    /* --- 2. LA CARTE (Fixe) --- */
     .flashcard-content {
         background-color: #ffffff;
-        padding: 30px;
-        border-radius: 24px 24px 0 0; /* Arrondi haut */
-        box-shadow: 0 -10px 25px rgba(0,0,0,0.05); /* Ombre légère */
+        padding: 20px 30px;
+        border-radius: 24px 24px 0 0; /* Arrondi seulement en haut */
+        box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
         text-align: center;
-        margin-top: 20px;
+        margin-top: 25px;
         
-        /* HAUTEUR FIXE POUR ÉVITER LES SAUTS */
-        height: 400px;
+        /* HAUTEUR FIXE ET CENTRAGE */
+        height: 450px !important;       
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        overflow: hidden;
         position: relative;
-        border-bottom: 1px solid #eee;
+        z-index: 1; 
     }
 
-    /* --- 3. TYPOGRAPHIE --- */
+    /* --- 3. TYPO INTERNE --- */
     .mode-indicator {
         position: absolute;
-        top: 20px;
+        top: 30px;
         left: 0; right: 0;
-        text-align: center;
-        font-size: 14px;
-        font-weight: 700;
-        color: #adb5bd;
+        font-size: 16px;
         text-transform: uppercase;
-        letter-spacing: 2px;
+        letter-spacing: 1.5px;
+        color: #adb5bd;
+        font-weight: 700;
     }
+    .content-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+    .huge-char { font-size: 130px; line-height: 1.2; color: #2c3e50; font-weight: 900; margin: 0; }
+    .huge-pinyin { font-size: 50px; color: #3498db; font-weight: 700; margin: 5px 0; }
+    .huge-fr { font-size: 35px; color: #505c6e; font-weight: 600; margin: 5px 0; }
 
-    .huge-char { font-size: 120px; line-height: 1.2; color: #2c3e50; font-weight: 900; }
-    .huge-pinyin { font-size: 48px; color: #3498db; font-weight: 700; margin-bottom: 10px; }
-    .huge-fr { font-size: 32px; color: #505c6e; font-weight: 600; }
-
-    /* Zone réponse grisée */
     .answer-container {
         background-color: #f8f9fa;
-        padding: 15px 30px;
-        border-radius: 12px;
+        border-radius: 16px;
+        padding: 10px 25px;
         margin-top: 15px;
-        animation: fadeIn 0.4s ease;
+        min-width: 60%;
+        animation: fadeIn 0.3s ease-in;
     }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     /* ========================================================================
-       --- 4. BOUTONS (LA PARTIE IMPORTANTE) ---
+       --- 4. STYLISATION DES BOUTONS ---
     ======================================================================== */
-    
-    /* Ciblage très large pour forcer le style sur tous les boutons principaux */
-    .stButton button {
+
+    .main .stButton button {
         width: 100%;
         border: none !important;
-        outline: none !important;
-        color: white !important;
-        font-weight: 800 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
         text-transform: uppercase;
         letter-spacing: 1px;
-        transition: transform 0.1s ease, box-shadow 0.1s ease !important;
     }
     
-    .stButton button:active {
-        transform: scale(0.98);
-    }
+    .main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
+    .main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
 
-    /* --- LE BOUTON "RÉVÉLER" (Bleu) --- */
-    /* On utilise une astuce : le bouton qui est seul dans sa rangée */
-    div[data-testid="stVerticalBlock"] > div > .stButton button {
-        height: 100px !important;       /* Hauteur fixe */
-        font-size: 28px !important;     /* Gros texte */
-        border-radius: 0 0 24px 24px !important; /* Arrondi bas seulement */
+    /* --- LE BOUTON "RÉVÉLER" (Magie CSS ici) --- */
+    /* Cible le bouton qui est seul (hors colonnes) */
+    .main div:not([data-testid="column"]) > .stButton button {
         background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
-        box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3) !important;
-        margin-top: -18px !important;   /* REMONTE LE BOUTON POUR LE COLLER À LA CARTE */
-        z-index: 1;
+        color: white !important;
+        border-radius: 0 0 24px 24px !important; /* Arrondi bas pour fermer la forme */
+        
+        margin-top: -24px !important;  /* Remonte pour coller à la carte */
+        height: 120px !important;      /* Plus haut */
+        font-size: 32px !important;    /* Texte TRÈS GROS */
+        font-weight: 900 !important;
+        z-index: 0;
     }
 
-    /* --- LES BOUTONS DE CHOIX (Rouge/Vert) --- */
-    /* Ceux-ci sont dans des colonnes */
-    div[data-testid="column"] .stButton button {
-        height: 80px !important;
-        font-size: 20px !important;
-        border-radius: 16px !important;
-        margin-top: 20px !important; /* Espace normal */
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+    /* --- BOUTONS CHOIX (Validé / À revoir) --- */
+    .main div[data-testid="column"] .stButton button {
+         border-radius: 16px !important;
+         height: 100px !important;
+         font-size: 24px !important;
+         font-weight: 800 !important;
+         margin-top: 20px; 
     }
 
-    /* Bouton À REVOIR (Colonne 1) */
+    /* Couleurs des choix */
     div[data-testid="column"]:nth-of-type(1) .stButton button {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%) !important;
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+        color: white !important;
     }
-
-    /* Bouton MÉMORISÉ (Colonne 2) */
     div[data-testid="column"]:nth-of-type(2) .stButton button {
-        background: linear-gradient(135deg, #1dd1a1 0%, #10ac84 100%) !important;
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
+        color: white !important;
     }
 
-    /* Nettoyage interface */
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    .stProgress > div > div > div { height: 8px !important; background-color: #3498db; }
+    /* Sidebar propre */
+    .css-1d391kg { background-color: #ffffff; }
+    .st-emotion-cache-16txtl3 { padding: 2rem 1rem; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- DONNÉES ---
+# --- DONNÉES COMPLÈTES ---
 if 'all_data' not in st.session_state:
     st.session_state.all_data = {
         "1-10": [
@@ -217,7 +221,7 @@ GAME_MODES = {
     4: "Symbole → FR", 5: "Pinyin -> Symbole", 6: "Symbole → Pinyin"
 }
 
-# --- ETAT ---
+# --- INITIALISATION ÉTAT ---
 if 'deck' not in st.session_state: st.session_state.deck = []
 if 'current_card' not in st.session_state: st.session_state.current_card = None
 if 'revealed' not in st.session_state: st.session_state.revealed = False
@@ -229,7 +233,7 @@ for k in st.session_state.all_data.keys():
 for k in GAME_MODES.keys():
     if f"chk_mode_{k}" not in st.session_state: st.session_state[f"chk_mode_{k}"] = True
 
-# --- LOGIQUE ---
+# --- FONCTIONS LOGIQUES ---
 def toggle_all_series(state):
     for k in st.session_state.all_data.keys():
         st.session_state[f"chk_serie_{k}"] = state
@@ -243,8 +247,11 @@ def start_game():
     series_to_use = [k for k in st.session_state.all_data.keys() if st.session_state[f"chk_serie_{k}"]]
     modes_to_use = [k for k in GAME_MODES.keys() if st.session_state[f"chk_mode_{k}"]]
     
-    if not series_to_use or not modes_to_use:
-        st.sidebar.error("⚠️ Sélectionne au moins une série et un mode.")
+    if not series_to_use:
+        st.sidebar.error("⚠️ Choisis au moins une série !")
+        return
+    if not modes_to_use:
+        st.sidebar.error("⚠️ Choisis au moins un mode !")
         return
 
     for serie_key in series_to_use:
@@ -277,11 +284,11 @@ def mark_review():
         st.session_state.deck.append(card)
     next_card()
 
-# --- SIDEBAR ---
+# ================= INTERFACE =================
+
 with st.sidebar:
-    st.title("🀄 Paramètres")
-    st.markdown("---")
-    st.subheader("Séries")
+    st.header("🎴 Configuration")
+    st.subheader("1. Séries")
     c1, c2 = st.columns(2)
     c1.button("✅ Toutes", key="all_s", on_click=toggle_all_series, args=(True,))
     c2.button("❌ Aucune", key="no_s", on_click=toggle_all_series, args=(False,))
@@ -291,7 +298,7 @@ with st.sidebar:
         st.checkbox(f"Série {key}", key=f"chk_serie_{key}")
 
     st.markdown("---")
-    st.subheader("Modes")
+    st.subheader("2. Modes de jeu")
     c3, c4 = st.columns(2)
     c3.button("✅ Tous", key="all_m", on_click=toggle_all_modes, args=(True,))
     c4.button("❌ Aucun", key="no_m", on_click=toggle_all_modes, args=(False,))
@@ -300,91 +307,105 @@ with st.sidebar:
         st.checkbox(m_name, key=f"chk_mode_{m_id}")
 
     st.markdown("---")
-    if st.button("LANCER LA SESSION", type="primary", use_container_width=True):
+    if st.button("🚀 LANCER UNE SESSION", type="primary", use_container_width=True):
         start_game()
         rerun()
 
-# --- MAIN PAGE ---
+# --- ZONE PRINCIPALE ---
 if not st.session_state.game_active:
-    st.markdown("<br><br><h2 style='text-align: center; color: #7f8c8d;'>Configure et lance une session via le menu latéral 👈</h2>", unsafe_allow_html=True)
+    st.markdown("""
+        <div style='text-align: center; padding: 50px; color: #6c757d;'>
+            <h1>👋 Bienvenue !</h1>
+            <p style='font-size: 1.2rem;'>Configure tes séries et tes modes dans la barre latérale,<br>puis clique sur "Lancer une session" pour commencer.</p>
+        </div>
+    """, unsafe_allow_html=True)
     st.stop()
 
 if st.session_state.current_card is None:
     st.balloons()
-    st.markdown("<br><br><h1 style='text-align: center; color: #27ae60;'>🎉 Terminé !</h1>", unsafe_allow_html=True)
-    if st.button("Recommencer", type="primary", use_container_width=True):
+    st.markdown("""
+        <div style='text-align: center; padding: 50px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);'>
+            <h1 style='color: #2ecc71; font-size: 3rem;'>Session terminée ! 🎉</h1>
+            <p style='font-size: 1.5rem; color: #6c757d;'>Beau travail.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    st.write("")
+    if st.button("Recommencer une session", type="primary", use_container_width=True):
         st.session_state.game_active = False
         rerun()
     st.stop()
 
-# --- PRÉPARATION DU CONTENU ---
 item, mode = st.session_state.current_card
 char, pinyin, fr = item
 mode_text = GAME_MODES[mode]
 
-# Progression
+# Barre de progression
 total = st.session_state.total_cards_initial
 restant = len(st.session_state.deck)
-st.progress((total - restant) / total if total > 0 else 0)
-st.caption(f"Cartes restantes : {restant}")
+progress_val = (total - restant) / total if total > 0 else 0
+st.progress(progress_val)
+st.caption(f"Progression : {total - restant} / {total}")
 
-# Génération HTML propre (variable python)
-q_div = ""
-a_div = ""
+# --- PRÉPARATION DU CONTENU HTML ---
+q_html = ""
+a_html = ""
 
-def make_answer(top_text, top_cls, bot_text=None, bot_cls=None):
-    html = f'<div class="answer-container"><div class="{top_cls}">{top_text}</div>'
-    if bot_text:
-        html += f'<div class="{bot_cls}">{bot_text}</div>'
+# Helper pour formater la réponse
+def format_answer(top, bottom=None):
+    html = f'<div class="answer-container"><div class="{top[1]}">{top[0]}</div>'
+    if bottom:
+        html += f'<div class="{bottom[1]}">{bottom[0]}</div>'
     html += '</div>'
     return html
 
 if mode == 1: # Pinyin → FR
-    q_div = f'<div class="huge-pinyin">{pinyin}</div>'
-    a_div = make_answer(char, "huge-char", fr, "huge-fr")
+    q_html = f'<div class="huge-pinyin">{pinyin}</div>'
+    a_html = format_answer((char, "huge-char"), (fr, "huge-fr"))
 elif mode == 2: # FR → Pinyin
-    q_div = f'<div class="huge-fr">{fr}</div>'
-    a_div = make_answer(char, "huge-char", pinyin, "huge-pinyin")
+    q_html = f'<div class="huge-fr" style="font-size: 50px;">{fr}</div>'
+    a_html = format_answer((char, "huge-char"), (pinyin, "huge-pinyin"))
 elif mode == 3: # FR -> Symbole
-    q_div = f'<div class="huge-fr">{fr}</div>'
-    a_div = make_answer(char, "huge-char", pinyin, "huge-pinyin")
+    q_html = f'<div class="huge-fr" style="font-size: 50px;">{fr}</div>'
+    a_html = format_answer((char, "huge-char"), (pinyin, "huge-pinyin"))
 elif mode == 4: # Symbole → FR
-    q_div = f'<div class="huge-char">{char}</div>'
-    a_div = make_answer(pinyin, "huge-pinyin", fr, "huge-fr")
+    q_html = f'<div class="huge-char">{char}</div>'
+    a_html = format_answer((pinyin, "huge-pinyin"), (fr, "huge-fr"))
 elif mode == 5: # Pinyin -> Symbole
-    q_div = f'<div class="huge-pinyin">{pinyin}</div>'
-    a_div = make_answer(char, "huge-char", fr, "huge-fr")
+    q_html = f'<div class="huge-pinyin">{pinyin}</div>'
+    a_html = format_answer((char, "huge-char"), (fr, "huge-fr"))
 elif mode == 6: # Symbole → Pinyin
-    q_div = f'<div class="huge-char">{char}</div>'
-    a_div = make_answer(pinyin, "huge-pinyin", fr, "huge-fr")
+    q_html = f'<div class="huge-char">{char}</div>'
+    a_html = format_answer((pinyin, "huge-pinyin"), (fr, "huge-fr"))
 
-# --- RENDU DE LA CARTE ---
-# Construction de la chaîne HTML EN UNE SEULE FOIS pour éviter le bug </div>
-final_html = f"""
+
+# ================= AFFICHAGE DE LA CARTE =================
+with st.container():
+    # 1. Le contenu HTML (fixe)
+    # L'alignement tout à gauche ici est crucial pour éviter le bug </div>
+    st.markdown(f"""
 <div class="flashcard-content">
-    <div class="mode-indicator">{mode_text}</div>
-    {q_div}
-    {a_div if st.session_state.revealed else ""}
+<div class="mode-indicator">{mode_text}</div>
+<div class="content-wrapper">
+{q_html}
+{a_html if st.session_state.revealed else ""}
 </div>
-"""
-st.markdown(final_html, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
 
-# --- BOUTONS D'ACTION ---
-# On place les boutons juste après le markdown. Le CSS (margin-top négatif) va les remonter.
-
-if not st.session_state.revealed:
-    # Le CSS cible ce bouton unique pour le rendre bleu et collé
-    if st.button("👁️ RÉVÉLER LA RÉPONSE", key="reveal_btn"):
-        st.session_state.revealed = True
-        rerun()
-else:
-    # Colonnes pour les choix
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("❌ À REVOIR", key="ko_btn"):
-            mark_review()
+    # 2. Zone des boutons d'action
+    if not st.session_state.revealed:
+        # Bouton Révéler (style spécifique CSS)
+        if st.button("👁️ Révéler la réponse", key="btn_reveal"):
+            st.session_state.revealed = True
             rerun()
-    with c2:
-        if st.button("✅ MÉMORISÉ", key="ok_btn"):
-            mark_memorized()
-            rerun()
+    else:
+        # Boutons Choix
+        c_ko, c_ok = st.columns(2, gap="medium")
+        with c_ko:
+            if st.button("❌ À revoir", key="btn_ko"):
+                mark_review()
+                rerun()
+        with c_ok:
+            if st.button("✅ Mémorisé", key="btn_ok"):
+                mark_memorized()
+                rerun()
