@@ -95,11 +95,17 @@ def save_session_to_disk():
     except Exception as e:
         st.sidebar.warning(f"Session: impossible d'écrire: {e}")
 
-# --- CSS (CORRECTION HAUTEUR & PLACEMENT) ---
+# --- CSS ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
 html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
+
+/* Variables de hauteur (modifie la valeur pour ajuster la hauteur des boutons top/bas) */
+:root {
+  --top-btn-height: 140px;     /* Hauteur des boutons TOP (Précédent / Favoris) */
+  --big-btn-height: 300px;     /* Hauteur des gros boutons Révéler / Choix */
+}
 
 /* Layout général */
 .stApp { background-color: #f0f2f5; }
@@ -108,6 +114,29 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 /* Progression */
 .stProgress > div > div > div { height: 10px !important; }
 div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center; font-weight: 600; color: #6c757d; }
+
+/* --- BARRE DU HAUT (Précédent / Favoris) --- */
+.area-top div[data-testid="column"] {
+  display: flex;
+  justify-content: center;    /* Centre le bouton dans sa colonne */
+}
+.area-top .stButton button {
+  height: var(--top-btn-height) !important;
+  width: 100% !important;
+  max-width: 420px !important;   /* Limite la largeur du bouton */
+  font-size: 30px !important;
+  font-weight: 800 !important;
+  border-radius: 16px !important;
+  border: 3px solid transparent !important;
+  margin-top: 10px !important;
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%) !important;
+  color: #ffffff !important;
+}
+.area-top .stButton button:hover {
+  background: #ffffff !important;
+  color: #7f8c8d !important;
+  border: 3px solid #7f8c8d !important;
+}
 
 /* --- CARTE --- */
 .flashcard-content {
@@ -131,12 +160,12 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center
 .answer-container { background-color: #f8f9fa; border-radius: 16px; padding: 10px 25px; margin-top: 10px; min-width: 60%; animation: fadeIn 0.3s ease-in; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* --- BOUTONS GÉANTS (Révéler / Choix / Top) --- */
+/* --- BOUTONS GÉANTS (Révéler / Choix) --- */
 
 /* 1. Zone Révéler (Bleu) */
 .area-reveal { margin-top: -10px !important; }
 .area-reveal .stButton button {
-    height: 300px !important;
+    height: var(--big-btn-height) !important;
     width: 100% !important;
     background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
     color: white !important;
@@ -152,34 +181,20 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center
 }
 
 /* 2. Zone Choix (Rouge / Vert) */
+.area-choices div[data-testid="column"] {
+    display: flex;
+    justify-content: center;      /* Centre les boutons dans leurs colonnes */
+}
 .area-choices .stButton button {
-    height: 300px !important;
+    height: var(--big-btn-height) !important;
     width: 100% !important;
+    max-width: 420px !important;  /* Optionnel : harmoniser largeur avec TOP */
     font-size: 30px !important;
     font-weight: 800 !important;
     border-radius: 16px !important;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     border: 3px solid transparent !important;
     margin-top: 10px !important;
-}
-
-/* 3. Zone TOP (Précédent / Favoris) */
-.area-top .stButton button {
-    height: 300px !important;
-    width: 100% !important;
-    font-size: 30px !important;
-    font-weight: 800 !important;
-    border-radius: 16px !important;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    border: 3px solid transparent !important;
-    margin-top: 10px !important;
-    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%) !important;
-    color: #ffffff !important;
-}
-.area-top .stButton button:hover {
-    background: #ffffff !important;
-    color: #7f8c8d !important;
-    border: 3px solid #7f8c8d !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -427,6 +442,24 @@ def reset_session():
     st.toast("♻️ Session réinitialisée (favoris et réglages conservés).", icon="✅")
     rerun()
 
+# --- Helper pour bouton désactivé avec même hauteur que Favoris/Précédent ---
+def render_disabled_button(label: str):
+    st.markdown(
+        f"""
+        <div style="display:flex;justify-content:center;">
+          <button style="
+            height:var(--top-btn-height);
+            width:100%;max-width:420px;
+            font-size:30px;font-weight:800;border-radius:16px;
+            background:#ecf0f1;color:#a0a0a0;border:3px solid #ecf0f1;
+            cursor:not-allowed;margin-top:10px;">
+            {label}
+          </button>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 # --- SIDEBAR ---
 with st.sidebar:
     st.header("🎴 Configuration")
@@ -596,7 +629,7 @@ elif mode == 6:  # Symbole → Pinyin
 
 # --- AFFICHAGE PRINCIPAL ---
 with st.container():
-    # 0) Boutons TOP GÉANTS : Précédent / Favoris
+    # 0) Boutons TOP : Précédent / Favoris (même hauteur)
     st.markdown('<div class="area-top">', unsafe_allow_html=True)
     c_top_back, c_top_fav = st.columns(2, gap="small")
 
@@ -606,13 +639,7 @@ with st.container():
                 undo_last_action()
                 rerun()
         else:
-            # Bouton désactivé visuel, grande taille
-            st.markdown(
-                '<button style="height:300px;width:100%;font-size:30px;font-weight:800;'
-                'border-radius:16px;background:#ecf0f1;color:#a0a0a0;border:3px solid #ecf0f1;cursor:not-allowed;">'
-                '⬅️ Précédent</button>',
-                unsafe_allow_html=True
-            )
+            render_disabled_button("⬅️ Précédent")
 
     with c_top_fav:
         is_fav = is_current_favorite()
@@ -648,6 +675,7 @@ with st.container():
         # Couleurs spécifiques pour les deux colonnes (rouge / vert)
         st.markdown("""
         <style>
+        /* Force couleur Rouge pour colonne 1 de area-choices */
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
             color: #ffffff !important;
@@ -655,6 +683,7 @@ with st.container():
         .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
             background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
         }
+        /* Force couleur Verte pour colonne 2 de area-choices */
         .area-choices div[data-testid="column"]:nth-of-type(2) .stButton button {
             background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
             color: #ffffff !important;
