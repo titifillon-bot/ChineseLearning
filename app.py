@@ -1,3 +1,4 @@
+
 import streamlit as st
 import random
 
@@ -12,145 +13,127 @@ def rerun():
         st.experimental_rerun()
 
 # ==============================================================================
-# --- CSS AVANCÉ (Carte Fixe + Bouton "Glued") ---
+# --- CSS AVANCÉ (Carte Fixe + Boutons collés/alignés) ---
 # ==============================================================================
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
-    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
+html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 
-    /* --- 1. LAYOUT PRINCIPAL --- */
-    .stApp { background-color: #f0f2f5; }
-    
-    .main .block-container {
-        max-width: 900px;
-        padding-top: 2rem;
-        padding-bottom: 5rem;
-    }
+/* --- 1. LAYOUT PRINCIPAL --- */
+.stApp { background-color: #f0f2f5; }
+.main .block-container {
+    max-width: 900px;                /* largeur carte + boutons */
+    padding-top: 2rem;
+    padding-bottom: 5rem;
+}
 
-    /* Cache la barre de progression vide */
-    .stProgress > div > div > div { height: 10px !important; }
-    
-    div[data-testid="stCaptionContainer"] {
-        margin-bottom: -20px;
-        text-align: center;
-        font-weight: 600;
-        color: #6c757d;
-    }
+/* --- Progress bar --- */
+.stProgress > div > div > div { height: 10px !important; }
+div[data-testid="stCaptionContainer"] {
+    margin-bottom: -20px;
+    text-align: center;
+    font-weight: 600;
+    color: #6c757d;
+}
 
-    /* --- 2. LA CARTE (Fixe) --- */
-    .flashcard-content {
-        background-color: #ffffff;
-        padding: 20px 30px;
-        border-radius: 24px 24px 0 0; /* Arrondi seulement en haut */
-        box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
-        text-align: center;
-        margin-top: 25px;
-        
-        /* HAUTEUR FIXE ET CENTRAGE */
-        height: 450px !important;        
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-        position: relative;
-        z-index: 1; 
-    }
+/* --- 2. LA CARTE (Fixe) --- */
+.flashcard-content {
+    background-color: #ffffff;
+    padding: 20px 30px;
+    border-radius: 24px 24px 0 0; /* Arrondi seulement en haut */
+    box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
+    text-align: center;
+    margin-top: 25px;
 
-    /* --- 3. TYPO INTERNE --- */
-    .mode-indicator {
-        position: absolute;
-        top: 30px;
-        left: 0; right: 0;
-        font-size: 16px;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        color: #adb5bd;
-        font-weight: 700;
-    }
-    .content-wrapper {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-    }
-    .huge-char { font-size: 130px; line-height: 1.2; color: #2c3e50; font-weight: 900; margin: 0; }
-    .huge-pinyin { font-size: 50px; color: #3498db; font-weight: 700; margin: 5px 0; }
-    .huge-fr { font-size: 35px; color: #505c6e; font-weight: 600; margin: 5px 0; }
+    height: 450px !important;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    overflow: hidden; position: relative; z-index: 1;
+    width: 100%; box-sizing: border-box;
+}
 
-    .answer-container {
-        background-color: #f8f9fa;
-        border-radius: 16px;
-        padding: 10px 25px;
-        margin-top: 15px;
-        min-width: 60%;
-        animation: fadeIn 0.3s ease-in;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+/* --- 3. TYPO INTERNE --- */
+.mode-indicator {
+    position: absolute; top: 30px; left: 0; right: 0;
+    font-size: 16px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: #adb5bd; font-weight: 700;
+}
+.content-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+.huge-char { font-size: 130px; line-height: 1.2; color: #2c3e50; font-weight: 900; margin: 0; }
+.huge-pinyin { font-size: 50px; color: #3498db; font-weight: 700; margin: 5px 0; }
+.huge-fr { font-size: 35px; color: #505c6e; font-weight: 600; margin: 5px 0; }
 
-    /* ========================================================================
-       --- 4. STYLISATION DES BOUTONS ---
-    ======================================================================== */
+.answer-container {
+    background-color: #f8f9fa; border-radius: 16px; padding: 10px 25px;
+    margin-top: 15px; min-width: 60%;
+    animation: fadeIn 0.3s ease-in;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .main .stButton button {
-        width: 100%;
-        border: none !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    .main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
-    .main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
+/* ========================================================================
+   --- 4. STYLISATION DES BOUTONS ---
+======================================================================= */
 
-    /* --- LE BOUTON "RÉVÉLER" (Magie CSS ici) --- */
-    /* Cible le bouton qui est seul (hors colonnes) */
-    .main div:not([data-testid="column"]) > .stButton button {
-        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
-        color: white !important;
-        border-radius: 0 0 24px 24px !important; /* Arrondi bas pour fermer la forme */
-        
-        margin-top: -24px !important;  /* Remonte pour coller à la carte */
-        
-        /* MODIFICATIONS TAILLE ET FONT */
-        width: 100% !important;
-        height: 160px !important;      /* Plus haut (+33%) */
-        font-size: 45px !important;    /* Texte TRÈS GROS */
-        
-        font-weight: 900 !important;
-        z-index: 0;
-    }
+/* Style générique */
+.main .stButton button {
+    width: 100%;
+    border: none !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
+.main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
 
-    /* --- BOUTONS CHOIX --- */
-    .main div[data-testid="column"] .stButton button {
-         border-radius: 16px !important;
-         height: 100px !important;
-         font-size: 24px !important;
-         font-weight: 800 !important;
-         margin-top: 20px; 
-    }
+/* --- Bouton "RÉVÉLER" : même largeur que la carte et collé en bas --- */
+/* ⚠️ Descendant (pas '>') pour contourner les wrappers internes de Streamlit */
+.main div:not([data-testid="column"]) .stButton button {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+    color: white !important;
+    border-radius: 0 0 24px 24px !important; /* ferme visuellement la carte */
+    margin-top: -24px !important;           /* colle au bas arrondi de la carte */
+    width: 100% !important;
+    height: 160px !important;
+    font-size: 45px !important;
+    font-weight: 900 !important;
+    z-index: 0;
+}
 
-    /* Couleurs des choix */
-    div[data-testid="column"]:nth-of-type(1) .stButton button {
-        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-        color: white !important;
-    }
-    div[data-testid="column"]:nth-of-type(2) .stButton button {
-        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
-        color: white !important;
-    }
+/* --- Zone des deux choix : largeur = carte, très petit écart central --- */
+.choice-row { width: 100%; box-sizing: border-box; }
 
-    /* Sidebar propre */
-    .css-1d391kg { background-color: #ffffff; }
-    .st-emotion-cache-16txtl3 { padding: 2rem 1rem; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+/* Réduction du gutter des colonnes exclusivement pour cette rangée */
+.choice-row [data-testid="column"] {
+    padding-left: 0 !important; padding-right: 0 !important;
+}
+.choice-row [data-testid="column"]:first-of-type { padding-right: 4px !important; }  /* ~4px de gap central */
+.choice-row [data-testid="column"]:last-of-type  { padding-left: 4px !important; }
+
+/* Boutons dans colonnes */
+.choice-row .stButton button {
+    border-radius: 16px !important;
+    height: 100px !important;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    margin-top: 20px;
+}
+
+/* Couleurs spécifiques */
+.choice-row [data-testid="column"]:nth-of-type(1) .stButton button {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+    color: white !important;
+}
+.choice-row [data-testid="column"]:nth-of-type(2) .stButton button {
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
+    color: white !important;
+}
+
+/* Sidebar propre (optionnel) */
+.css-1d391kg { background-color: #ffffff; }
+.st-emotion-cache-16txtl3 { padding: 2rem 1rem; }
+</style>
+""", unsafe_allow_html=True)
 
 # --- DONNÉES COMPLÈTES ---
 if 'all_data' not in st.session_state:
@@ -381,35 +364,37 @@ elif mode == 6: # Symbole → Pinyin
     q_html = f'<div class="huge-char">{char}</div>'
     a_html = format_answer((pinyin, "huge-pinyin"), (fr, "huge-fr"))
 
-
 # ================= AFFICHAGE DE LA CARTE =================
 with st.container():
-    # 1. Le contenu HTML (fixe)
-    # L'alignement tout à gauche ici est crucial pour éviter le bug </div>
+    # Carte
     st.markdown(f"""
 <div class="flashcard-content">
-<div class="mode-indicator">{mode_text}</div>
-<div class="content-wrapper">
-{q_html}
-{a_html if st.session_state.revealed else ""}
-</div>
+  <div class="mode-indicator">{mode_text}</div>
+  <div class="content-wrapper">
+    {q_html}
+    {a_html if st.session_state.revealed else ""}
+  </div>
 </div>
 """, unsafe_allow_html=True)
 
-    # 2. Zone des boutons d'action
+    # Boutons
     if not st.session_state.revealed:
-        # Bouton Révéler (style spécifique CSS)
-        if st.button("👁️ Révéler la réponse", key="btn_reveal"):
+        # Bouton Révéler : largeur carte
+        if st.button("👁️ Révéler la réponse", key="btn_reveal", use_container_width=True):
             st.session_state.revealed = True
             rerun()
     else:
-        # Boutons Choix
-        c_ko, c_ok = st.columns(2, gap="medium")
-        with c_ko:
-            if st.button("❌ À revoir", key="btn_ko"):
-                mark_review()
-                rerun()
-        with c_ok:
-            if st.button("✅ Mémorisé", key="btn_ok"):
-                mark_memorized()
-                rerun()
+        # Deux choix : côte à côte, petit écart central, largeur carte
+        choice_wrap = st.container()
+        with choice_wrap:
+            st.markdown('<div class="choice-row">', unsafe_allow_html=True)
+            c_ko, c_ok = st.columns(2, gap="small")
+            with c_ko:
+                if st.button("❌ À revoir", key="btn_ko", use_container_width=True):
+                    mark_review()
+                    rerun()
+            with c_ok:
+                if st.button("✅ Mémorisé", key="btn_ok", use_container_width=True):
+                    mark_memorized()
+                    rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
