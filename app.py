@@ -12,25 +12,25 @@ def rerun():
         # Fallback pour anciennes versions de Streamlit
         st.experimental_rerun()
 
-# --- CSS ULTRA-LARGE POUR TABLETTE ---
-st.markdown("""
+# --- CSS ULTRA-LARGE POUR TABLETTE & AMÉLIORATIONS DE LAYOUT ---
+st.markdown(
+    """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-    html, body, [class*="css"] { fontFamily: 'Roboto', sans-serif; }
+    html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
 
     /* === STYLE DE LA CARTE CENTRALE (La bulle) === */
     .stCard {
         background-color: #ffffff;
         padding: 30px; /* Espace intérieur */
-        border-radius: 25px; /* Coins très arrondis */
-        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-        text-align: center; /* FORCE LE CENTRAGE HORIZONTAL */
+        border-radius: 18px; /* Coins arrondis */
+        box-shadow: 0 10px 40px rgba(20,20,30,0.08);
+        text-align: center;
         margin: 20px auto;
-        max-width: 900px; /* Largeur max sur très grands écrans */
-        border: 2px solid #f0f2f6;
+        max-width: 920px; /* Largeur max de la bulle */
+        border: 1px solid #f0f2f6;
     }
-    
-    /* S'assure que les éléments en bloc sont centrés */
+
     .centered-content {
         display: flex;
         flex-direction: column;
@@ -39,78 +39,86 @@ st.markdown("""
         width: 100%;
     }
 
-    /* Gros texte pour le caractère */
+    /* Centrage explicite du caractère/pinyin (question) */
+    .huge-char, .huge-pinyin {
+        display: block;
+        margin: 8px auto;
+        text-align: center;
+        line-height: 1.05;
+    }
+
+    /* Taille et style des éléments */
     .huge-char { 
-        font-size: 140px; /* Encore plus gros */
+        font-size: 140px; 
         color: #1E88E5; 
         font-weight: 900; 
-        line-height: 1.1;
-        margin: 10px 0;
     }
-    
-    /* Gros texte pour le pinyin */
     .huge-pinyin { 
         font-size: 70px; 
         color: #1565C0; 
         font-weight: 700; 
-        margin: 10px 0 30px 0;
     }
 
-    /* Texte de réponse */
+    .question-mode {
+        font-size: 22px;
+        color: #868e96;
+        margin-bottom: 20px;
+        font-weight: 600;
+        width: 100%;
+        text-align: left;
+    }
+
     .answer-text { 
         font-size: 40px; 
         color: #333; 
         background-color: #eef2f7; 
-        padding: 25px; 
-        border-radius: 15px; 
-        margin: 30px 0;
+        padding: 28px; 
+        border-radius: 14px; 
+        margin: 20px 0;
         font-weight: 500;
         width: 100%;
     }
 
-    /* === STYLE GÉNÉRAL DES BOUTONS (Appliqué partout) === */
-    div.stButton > button {
-        width: 100% !important; /* LARGEUR MAXIMALE FORCÉE */
-        border-radius: 15px !important;
-        height: 85px !important; /* Hauteur confortable pour le pouce */
-        font-size: 28px !important;
-        font-weight: bold !important;
-        border: none !important; /* Pas de bordure */
-        color: white !important; /* Texte blanc sur fond coloré */
-        margin: 5px 0; /* Petit espace vertical */
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        transition: filter 0.2s;
+    /* === BOUTONS : uniformisation et taille adaptative === */
+    .stCard .stButton > button {
+        width: 100% !important; /* prennent la largeur du conteneur (colonne) */
+        border-radius: 12px !important;
+        height: 78px !important;
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        border: none !important;
+        color: white !important;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        transition: transform 0.08s ease, filter 0.12s ease;
     }
-    div.stButton > button:hover { filter: brightness(110%); }
-    div.stButton > button:active { transform: scale(0.98); box-shadow: none;}
+    .stCard .stButton > button:active { transform: translateY(1px) scale(0.998); }
 
-    /* --- COULEURS SPÉCIFIQUES DES BOUTONS --- */
-    
-    /* SIDEBAR : Vert pour 'Tous', Rouge pour 'Aucun' */
-    [data-testid="stSidebar"] [data-testid="column"]:nth-of-type(1) button { background-color: #4CAF50; }
-    [data-testid="stSidebar"] [data-testid="column"]:nth-of-type(2) button { background-color: #E53935; }
-    /* SIDEBAR : Bleu pour 'Lancer' */
-    [data-testid="stSidebar"] .stButton button:contains("LANCER") { background-color: #1976D2; height: 100px !important; font-size: 32px !important;}
+    /* Reveal (le bouton en single column au milieu de la bulle) */
+    .reveal-wrapper { width: 72%; margin: 22px auto 8px auto; }
+    .reveal-wrapper .stButton > button { background-color: #1976D2 !important; height:86px !important; font-size:24px !important; }
 
-    /* ZONE PRINCIPALE : Bouton RÉVÉLER (Bleu) */
-    /* On cible le bouton seul quand la réponse n'est pas révélée */
-    .main .stButton button { background-color: #2196F3; }
+    /* Row d'actions : colonnes côte à côte occupant toute la largeur de la bulle */
+    .action-row > div { padding: 0 8px; } /* léger espacement entre colonnes */
+    .action-row .stButton > button { height:86px !important; font-size:20px !important; }
 
-    /* ZONE PRINCIPALE (Réponse révélée) : Couleurs des 2 colonnes */
-    /* Colonne Gauche -> ROUGE (À revoir) */
-    div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] > div:nth-child(1) button {
-         background-color: #D32F2F !important; /* Rouge vif */
-    }
-    /* Colonne Droite -> VERT (Mémorisé) */
-    div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] > div:nth-child(2) button {
-         background-color: #388E3C !important; /* Vert vif */
-    }
-    
+    /* Couleurs remplies pour les 2 boutons d'action (gauche = rouge, droite = vert) */
+    /* On cible la structure générée par st.columns lorsqu'elle est à l'intérieur de .action-row */
+    .action-row > div:nth-child(1) .stButton > button { background-color: #D32F2F !important; }
+    .action-row > div:nth-child(2) .stButton > button { background-color: #388E3C !important; }
+
     /* Ajustement des checkboxes pour la tablette */
-    .stCheckbox label { font-size: 22px !important; padding: 10px 0; }
+    .stCheckbox label { font-size: 20px !important; padding: 10px 0; }
 
+    /* Responsive: réduire un peu les tailles sur petits écrans */
+    @media (max-width: 800px) {
+        .huge-char { font-size: 90px; }
+        .huge-pinyin { font-size: 36px; }
+        .reveal-wrapper { width: 92%; }
+    }
     </style>
-    """, unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
 
 # --- DONNÉES COMPLÈTES ---
 if 'all_data' not in st.session_state:
@@ -298,9 +306,10 @@ restant = len(st.session_state.deck)
 st.progress((total - restant) / total if total > 0 else 0)
 st.caption(f"Progression : {total - restant}/{total}")
 
-# --- DÉBUT DE LA CARTE (Bulle) ---
+# --- CARTE PRINCIPALE (LA BULLE) ---
+# On ouvre la bulle ici et on la garde ouverte pour inclure les boutons (permet un alignement parfait)
 st.markdown('<div class="stCard"><div class="centered-content">', unsafe_allow_html=True)
-st.markdown(f'<div style="font-size: 24px; color: #999; margin-bottom: 25px; font-weight:500;">{mode_text}</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="question-mode">{mode_text}</div>', unsafe_allow_html=True)
 
 # Contenu HTML (Question/Réponse)
 q_html = ""
@@ -325,37 +334,33 @@ elif mode == 6: # Symbole -> Pinyin
     q_html = f'<span class="huge-char">{char}</span>'
     a_html = f'{pinyin}<br>{fr}'
 
-# AFFICHER LA QUESTION (Centrée)
+# AFFICHER LA QUESTION (Centrée dans la bulle)
 st.markdown(q_html, unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True) # Fin centered-content pour la question
-
-# --- ZONE ACTIONS ---
+# --- ZONE ACTIONS DANS LA BULLE ---
 if not st.session_state.revealed:
-    # Bouton RÉVÉLER (Bleu, pleine largeur)
-    st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
+    # Bouton RÉVÉLER : on le place à l'intérieur d'une wrapper pour contrôler sa largeur (égale à la bulle)
+    st.markdown('<div class="reveal-wrapper">', unsafe_allow_html=True)
     if st.button("👁️ RÉVÉLER"):
         st.session_state.revealed = True
         rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 else:
-    # AFFICHER LA RÉPONSE (Dans la carte, centrée)
-    st.markdown('<div class="stCard" style="margin-top:-30px; border-top:none; padding-top:0;"><div class="centered-content">', unsafe_allow_html=True)
+    # AFFICHER LA RÉPONSE (toujours dans la bulle)
     st.markdown(f'<div class="answer-text">{a_html}</div>', unsafe_allow_html=True)
-    st.markdown('</div></div>', unsafe_allow_html=True)
     
-    # Boutons Validation (Côte à côte, pleine largeur, remplis)
+    # Boutons Validation (Côte à côte, occupent la largeur de la bulle)
+    st.markdown('<div class="action-row" style="width:100%; margin-top:8px;">', unsafe_allow_html=True)
     c_ko, c_ok = st.columns(2)
     with c_ko:
-        # Le CSS ciblera ce bouton pour le mettre en ROUGE
         if st.button("❌ À REVOIR", key="btn_ko"):
             mark_review()
             rerun()
     with c_ok:
-        # Le CSS ciblera ce bouton pour le mettre en VERT
         if st.button("✅ MÉMORISÉ", key="btn_ok"):
             mark_memorized()
             rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Fin de la carte principale (fermée plus haut si révélé pour insérer les boutons au milieu)
-if not st.session_state.revealed:
-     st.markdown('</div>', unsafe_allow_html=True)
+# Fermer la bulle
+st.markdown('</div></div>', unsafe_allow_html=True)
