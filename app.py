@@ -95,17 +95,16 @@ def save_session_to_disk():
     except Exception as e:
         st.sidebar.warning(f"Session: impossible d'écrire: {e}")
 
-# --- CSS (couleurs & hauteurs personnalisées) ---
+# --- CSS ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
 html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 
-/* Variables : ajuste simplement ces deux valeurs si besoin */
+/* Variables de hauteur (modifie la valeur pour ajuster la hauteur des boutons top/bas) */
 :root {
   --top-btn-height: 140px;     /* Hauteur des boutons TOP (Précédent / Favoris) */
   --big-btn-height: 300px;     /* Hauteur des gros boutons Révéler / Choix */
-  --max-btn-width: 420px;      /* Largeur max pour centrer sans prendre toute la colonne */
 }
 
 /* Layout général */
@@ -115,6 +114,29 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 /* Progression */
 .stProgress > div > div > div { height: 10px !important; }
 div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center; font-weight: 600; color: #6c757d; }
+
+/* --- BARRE DU HAUT (Précédent / Favoris) --- */
+.area-top div[data-testid="column"] {
+  display: flex;
+  justify-content: center;    /* Centre le bouton dans sa colonne */
+}
+.area-top .stButton button {
+  height: var(--top-btn-height) !important;
+  width: 100% !important;
+  max-width: 420px !important;   /* Limite la largeur du bouton */
+  font-size: 30px !important;
+  font-weight: 800 !important;
+  border-radius: 16px !important;
+  border: 3px solid transparent !important;
+  margin-top: 10px !important;
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%) !important;
+  color: #ffffff !important;
+}
+.area-top .stButton button:hover {
+  background: #ffffff !important;
+  color: #7f8c8d !important;
+  border: 3px solid #7f8c8d !important;
+}
 
 /* --- CARTE --- */
 .flashcard-content {
@@ -138,46 +160,9 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center
 .answer-container { background-color: #f8f9fa; border-radius: 16px; padding: 10px 25px; margin-top: 10px; min-width: 60%; animation: fadeIn 0.3s ease-in; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* --- ZONE TOP (Précédent / Favoris) --- */
-.area-top div[data-testid="column"] {
-  display: flex; justify-content: center;
-}
-.area-top .stButton button {
-  height: var(--top-btn-height) !important;
-  width: 100% !important;
-  max-width: var(--max-btn-width) !important;
-  font-size: 28px !important;
-  font-weight: 800 !important;
-  border-radius: 16px !important;
-  border: 3px solid transparent !important;
-  margin-top: 10px !important;
-}
+/* --- BOUTONS GÉANTS (Révéler / Choix) --- */
 
-/* Top - Colonne 1 : Précédent */
-.area-top div[data-testid="column"]:nth-of-type(1) .stButton button {
-  background: #1F2D3D !important;   /* bleu-navy foncé */
-  color: #ECF0F1 !important;         /* gris très clair */
-  border-color: #1F2D3D !important;
-}
-.area-top div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
-  background: #ECF0F1 !important;    /* inversion */
-  color: #1F2D3D !important;
-  border: 3px solid #1F2D3D !important;
-}
-
-/* Top - Colonne 2 : Favoris */
-.area-top div[data-testid="column"]:nth-of-type(2) .stButton button {
-  background: #F39C12 !important;    /* orange / amber */
-  color: #FFFFFF !important;
-  border-color: #F39C12 !important;
-}
-.area-top div[data-testid="column"]:nth-of-type(2) .stButton button:hover {
-  background: #FFFFFF !important;    /* inversion */
-  color: #F39C12 !important;
-  border: 3px solid #F39C12 !important;
-}
-
-/* --- ZONE REVEAL --- */
+/* 1. Zone Révéler (Bleu) */
 .area-reveal { margin-top: -10px !important; }
 .area-reveal .stButton button {
     height: var(--big-btn-height) !important;
@@ -195,43 +180,21 @@ div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center
     box-shadow: 0 15px 25px rgba(0,0,0,0.15) !important;
 }
 
-/* --- ZONE CHOIX (À revoir / Mémorisé) --- */
+/* 2. Zone Choix (Rouge / Vert) */
 .area-choices div[data-testid="column"] {
-  display: flex; justify-content: center;
+    display: flex;
+    justify-content: center;      /* Centre les boutons dans leurs colonnes */
 }
 .area-choices .stButton button {
-  height: var(--big-btn-height) !important;
-  width: 100% !important;
-  max-width: var(--max-btn-width) !important;
-  font-size: 30px !important;
-  font-weight: 800 !important;
-  border-radius: 16px !important;
-  border: 3px solid transparent !important;
-  margin-top: 10px !important;
-}
-
-/* Bottom - Colonne 1 : À revoir (Rouge) */
-.area-choices div[data-testid="column"]:nth-of-type(1) .stButton button {
-  background: #E74C3C !important;    /* rouge */
-  color: #FFFFFF !important;
-  border-color: #E74C3C !important;
-}
-.area-choices div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
-  background: #FFFFFF !important;    /* inversion */
-  color: #C0392B !important;         /* rouge foncé pour le texte */
-  border: 3px solid #C0392B !important;
-}
-
-/* Bottom - Colonne 2 : Mémorisé (Vert) */
-.area-choices div[data-testid="column"]:nth-of-type(2) .stButton button {
-  background: #2ECC71 !important;    /* vert */
-  color: #FFFFFF !important;
-  border-color: #2ECC71 !important;
-}
-.area-choices div[data-testid="column"]:nth-of-type(2) .stButton button:hover {
-  background: #FFFFFF !important;    /* inversion */
-  color: #27AE60 !important;         /* vert foncé pour le texte */
-  border: 3px solid #27AE60 !important;
+    height: var(--big-btn-height) !important;
+    width: 100% !important;
+    max-width: 420px !important;  /* Optionnel : harmoniser largeur avec TOP */
+    font-size: 30px !important;
+    font-weight: 800 !important;
+    border-radius: 16px !important;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    border: 3px solid transparent !important;
+    margin-top: 10px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -432,9 +395,12 @@ def next_card():
     """Passe à la carte suivante OU déclenche le reset auto si 100% atteint."""
     st.session_state.revealed = False
     if st.session_state.deck:
+        # Il reste des cartes → on passe à la suivante
         st.session_state.current_card = st.session_state.deck[0]
         save_session_to_disk()
     else:
+        # 100% atteint → reset automatique
+        # st.toast("🎉 100% de réussite — réinitialisation…", icon="✅")  # optionnel
         reset_session()
         return
 
@@ -467,6 +433,7 @@ def reset_session():
     st.session_state.history = []
     st.session_state._toast_restored_shown = False
 
+    # Vide proprement le fichier de session pour repartir sur une base saine
     try:
         SESSION_FILE.write_text(json.dumps({}, indent=2), encoding="utf-8")
     except Exception as e:
@@ -475,15 +442,15 @@ def reset_session():
     st.toast("♻️ Session réinitialisée (favoris et réglages conservés).", icon="✅")
     rerun()
 
-# --- Helper : bouton désactivé (même hauteur que TOP) ---
+# --- Helper pour bouton désactivé avec même hauteur que Favoris/Précédent ---
 def render_disabled_button(label: str):
     st.markdown(
         f"""
         <div style="display:flex;justify-content:center;">
           <button style="
             height:var(--top-btn-height);
-            width:100%;max-width:var(--max-btn-width);
-            font-size:28px;font-weight:800;border-radius:16px;
+            width:100%;max-width:420px;
+            font-size:30px;font-weight:800;border-radius:16px;
             background:#ecf0f1;color:#a0a0a0;border:3px solid #ecf0f1;
             cursor:not-allowed;margin-top:10px;">
             {label}
@@ -662,7 +629,7 @@ elif mode == 6:  # Symbole → Pinyin
 
 # --- AFFICHAGE PRINCIPAL ---
 with st.container():
-    # 0) Boutons TOP : Précédent / Favoris (couleurs + inversion hover)
+    # 0) Boutons TOP : Précédent / Favoris (même hauteur)
     st.markdown('<div class="area-top">', unsafe_allow_html=True)
     c_top_back, c_top_fav = st.columns(2, gap="small")
 
@@ -705,9 +672,31 @@ with st.container():
     else:
         st.markdown('<div class="area-choices">', unsafe_allow_html=True)
 
+        # Couleurs spécifiques pour les deux colonnes (rouge / vert)
+        st.markdown("""
+        <style>
+        /* Force couleur Rouge pour colonne 1 de area-choices */
+        .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+            color: #ffffff !important;
+        }
+        .area-choices div[data-testid="column"]:nth-of-type(1) .stButton button:hover {
+            background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
+        }
+        /* Force couleur Verte pour colonne 2 de area-choices */
+        .area-choices div[data-testid="column"]:nth-of-type(2) .stButton button {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
+            color: #ffffff !important;
+        }
+        .area-choices div[data-testid="column"]:nth-of-type(2) .stButton button:hover {
+            background: #ffffff !important; color: #27ae60 !important; border: 3px solid #27ae60 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
         c_ko, c_ok = st.columns(2, gap="small")
         with c_ko:
-            if st.button("❌ À revoir",width=True):
+            if st.button("❌ À revoir", key="btn_ko", use_container_width=True):
                 mark_review()
                 save_session_to_disk()
                 rerun()
