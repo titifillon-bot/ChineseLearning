@@ -1,15 +1,4 @@
-Voici le code **complet et final**.
 
-J'ai intégré toutes tes demandes :
-
-1.  **Taille fixe de la carte** (fini les sauts de page).
-2.  **Centrage vertical** parfait du contenu.
-3.  **Correction du bug `</div>`** (l'affichage de code gris).
-4.  **Bouton "Révéler"** : Il est maintenant **collé** au bas de la carte, fait la **même largeur**, et le texte est **beaucoup plus gros**.
-
-Tu n'as qu'à copier-coller tout ceci dans ton fichier `app.py`.
-
-```python
 import streamlit as st
 import random
 
