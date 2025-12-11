@@ -76,12 +76,13 @@ def save_session_to_disk():
         st.sidebar.warning(f"Session: impossible d'écrire: {e}")
 
 # --- CSS MODIFIÉ (HAUTEUR FORCÉE) ---
+# --- CSS ROBUSTE (FORCE LA HAUTEUR) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
 html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 
-/* Layout */
+/* Layout général */
 .stApp { background-color: #f0f2f5; }
 .main .block-container { max-width: 900px; padding-top: 1rem; padding-bottom: 5rem; }
 
@@ -89,7 +90,7 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 .stProgress > div > div > div { height: 10px !important; }
 div[data-testid="stCaptionContainer"] { margin-bottom: -10px; text-align: center; font-weight: 600; color: #6c757d; }
 
-/* --- BARRE DU HAUT (Boutons Retour / Fav) --- */
+/* --- BARRE DU HAUT --- */
 div[data-testid="column"] .stButton button {
     width: 100%;
     border-radius: 12px;
@@ -111,74 +112,76 @@ div[data-testid="column"] .stButton button {
   overflow: hidden; position: relative; z-index: 1;
   width: 100%; box-sizing: border-box;
 }
-
-/* Typo interne */
 .mode-indicator { margin-top: 50px; font-size: 16px; text-transform: uppercase; letter-spacing: 1.5px; color: #adb5bd; font-weight: 700; }
 .content-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 20px; }
 .huge-char { font-size: 110px; line-height: 1.2; color: #2c3e50; font-weight: 900; margin: 0; }
 .huge-pinyin { font-size: 45px; color: #3498db; font-weight: 700; margin: 5px 0; }
 .huge-fr { font-size: 30px; color: #505c6e; font-weight: 600; margin: 5px 0; }
-
 .answer-container { background-color: #f8f9fa; border-radius: 16px; padding: 10px 25px; margin-top: 10px; min-width: 60%; animation: fadeIn 0.3s ease-in; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* --- BOUTONS D'ACTION DU BAS (300px DE HAUTEUR FORCÉE) --- */
+/* --- BOUTONS D'ACTION DU BAS (CORRECTION HAUTEUR) --- */
 
-/* Animation générique */
-.main .stButton button {
-  transition: all 0.2s ease !important;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.08); text-transform: uppercase; letter-spacing: 1px;
+/* 1. Bouton RÉVÉLER (Le Grand Bleu) */
+/* On force le conteneur HTML que j'ai créé à faire 300px */
+.reveal-btn {
+    height: 300px !important;
+    margin-top: -24px !important; /* Pour coller à la carte */
+    display: block;
 }
-.main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
-.main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
-
-/* --- CIBLAGE PRÉCIS POUR LA HAUTEUR --- */
-
-/* 1. Bouton RÉVÉLER */
-/* On cible le div parent .reveal-btn puis le bouton dedans */
+/* On force le widget Streamlit à l'intérieur à prendre toute la hauteur */
+.reveal-btn .stButton {
+    height: 100% !important;
+    width: 100% !important;
+}
+/* On force le bouton lui-même à prendre toute la hauteur */
 .reveal-btn button {
-  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
-  color: white !important; 
-  border-radius: 0 0 24px 24px !important;
-  margin-top: -24px !important; 
-  width: 100% !important;
-  /* HAUTEUR FORCÉE ICI */
-  height: 300px !important; 
-  min-height: 300px !important;
-  font-size: 40px !important; 
-  font-weight: 900 !important; 
-  z-index: 0; border: none !important;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+    color: white !important; 
+    border-radius: 0 0 24px 24px !important;
+    width: 100% !important;
+    height: 100% !important; /* Remplir le conteneur de 300px */
+    font-size: 40px !important; 
+    font-weight: 900 !important; 
+    border: none !important;
 }
 
 /* 2. Boutons CHOIX (Revoir / Mémorisé) */
-.choice-row { width: 100%; box-sizing: border-box; }
-.choice-row [data-testid="column"] { padding: 0 5px !important; }
-
-.choice-row .stButton button {
-  border-radius: 18px !important; 
-  /* HAUTEUR FORCÉE ICI */
-  height: 300px !important; 
-  min-height: 300px !important;
-  font-size: 28px !important; 
-  font-weight: 850 !important;
-  margin-top: 22px; 
-  border: 3px solid transparent !important;
-  display: flex; flex-direction: column; justify-content: center; align-items: center;
+.choice-row { 
+    width: 100%; 
+    height: 300px !important; /* Force hauteur rangée */
+    margin-top: 22px;
+}
+.choice-row [data-testid="column"] { 
+    height: 100% !important; 
+    padding: 0 5px !important; 
+}
+.choice-row .stButton {
+    height: 100% !important;
+}
+.choice-row button {
+    border-radius: 18px !important; 
+    height: 100% !important; /* Remplir le conteneur de 300px */
+    min-height: 300px !important; /* Sécurité supplémentaire */
+    font-size: 28px !important; 
+    font-weight: 850 !important;
+    border: 3px solid transparent !important;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
 }
 
-/* Couleurs spécifiques pour Revoir/Mémorisé */
-.choice-row [data-testid="column"]:nth-of-type(1) .stButton button {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; color: #ffffff !important;
+/* Couleurs spécifiques */
+.choice-row [data-testid="column"]:nth-of-type(1) button {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; color: #ffffff !important;
 }
-.choice-row [data-testid="column"]:nth-of-type(1) .stButton button:hover {
-  background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
+.choice-row [data-testid="column"]:nth-of-type(1) button:hover {
+    background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
 }
 
-.choice-row [data-testid="column"]:nth-of-type(2) .stButton button {
-  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important; color: #ffffff !important;
+.choice-row [data-testid="column"]:nth-of-type(2) button {
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important; color: #ffffff !important;
 }
-.choice-row [data-testid="column"]:nth-of-type(2) .stButton button:hover {
-  background: #ffffff !important; color: #27ae60 !important; border: 3px solid #27ae60 !important;
+.choice-row [data-testid="column"]:nth-of-type(2) button:hover {
+    background: #ffffff !important; color: #27ae60 !important; border: 3px solid #27ae60 !important;
 }
 </style>
 """, unsafe_allow_html=True)
