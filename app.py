@@ -4,21 +4,21 @@ import random
 import json
 from pathlib import Path
 
-# --- CONFIGURATION DE LA PAGE ---
+# --- CONFIG PAGE ---
 st.set_page_config(page_title="Radicaux Chinois", layout="wide", initial_sidebar_state="expanded")
 
-# --- PERSISTENCE (fichiers) ---
+# --- FILES ---
 FAV_FILE = Path("favoris.json")
 SESSION_FILE = Path("session.json")
 
-# --- RERUN compatible versions ---
+# --- RERUN ---
 def rerun():
     try:
         st.rerun()
     except AttributeError:
         st.experimental_rerun()
 
-# --- FAVORIS: Load/Save ---
+# --- FAVORIS: LOAD/SAVE ---
 def load_favorites_from_disk():
     if FAV_FILE.exists():
         try:
@@ -34,8 +34,8 @@ def save_favorites_to_disk():
     except Exception as e:
         st.sidebar.warning(f"Favoris: impossible d'écrire: {e}")
 
-# --- SESSION: Load/Save ---
-def load_session_from_disk():
+# --- SESSION: LOAD/SAVE ---
+def load_session_from_disk(show_toast: bool = False):
     if SESSION_FILE.exists():
         try:
             data = json.loads(SESSION_FILE.read_text(encoding="utf-8"))
@@ -47,12 +47,15 @@ def load_session_from_disk():
             st.session_state.game_active = bool(data.get("game_active", False))
             st.session_state.total_cards_initial = int(data.get("total_cards_initial", len(st.session_state.deck)))
             st.session_state.use_favorites_only = bool(data.get("use_favorites_only", False))
-            # restaure checkboxes modes/séries si présents
+            # restaure checkboxes
             for k, v in data.get("series_flags", {}).items():
                 st.session_state[k] = bool(v)
             for k, v in data.get("mode_flags", {}).items():
                 st.session_state[k] = bool(v)
-            st.toast("🧯 Session restaurée", icon="✅")
+            # évite le toast répétitif
+            if show_toast and not st.session_state.get("_toast_restored_shown", False):
+                st.toast("🧯 Session restaurée", icon="✅")
+                st.session_state._toast_restored_shown = True
         except Exception as e:
             st.sidebar.warning(f"Session: impossible de charger: {e}")
 
@@ -74,162 +77,97 @@ def save_session_to_disk():
     except Exception as e:
         st.sidebar.warning(f"Session: impossible d'écrire: {e}")
 
-# ==============================================================================
-# --- CSS AVANCÉ (Carte + Boutons + Étoile en haut à droite de la carte) ---
-# ==============================================================================
+# --- CSS ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
 html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 
-/* Layout principal */
+/* Layout */
 .stApp { background-color: #f0f2f5; }
-.main .block-container {
-    max-width: 900px;    /* largeur carte + boutons */
-    padding-top: 2rem;
-    padding-bottom: 5rem;
-}
+.main .block-container { max-width: 900px; padding-top: 2rem; padding-bottom: 5rem; }
 
 /* Progression */
 .stProgress > div > div > div { height: 10px !important; }
-div[data-testid="stCaptionContainer"] {
-    margin-bottom: -20px;
-    text-align: center;
-    font-weight: 600;
-    color: #6c757d;
-}
-
-/* Conteneur carte + étoile (position:relative pour l'overlay) */
-.card-wrap {
-    position: relative;
-    width: 100%;
-}
+div[data-testid="stCaptionContainer"] { margin-bottom: -20px; text-align: center; font-weight: 600; color: #6c757d; }
 
 /* Carte */
 .flashcard-content {
-    background-color: #ffffff;
-    padding: 20px 30px;
-    border-radius: 24px 24px 0 0;
-    box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
-    text-align: center;
-    margin-top: 25px;
-
-    height: 450px !important;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    overflow: hidden; position: relative; z-index: 1;
-    width: 100%; box-sizing: border-box;
-}
-
-/* Bouton étoile — en haut à droite de la carte */
-.card-wrap .fav-btn-wrap {
-    position: absolute;
-    top: 22px;
-    right: 26px;
-    z-index: 3;
-}
-.card-wrap .fav-btn-wrap .stButton button {
-    background: #ffd54f !important;
-    color: #8d6e63 !important;
-    border-radius: 22px !important;
-    height: 42px !important;
-    font-size: 16px !important;
-    font-weight: 800 !important;
-    padding: 6px 14px !important;
-    border: 2px solid #ffca28 !important;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
-}
-.card-wrap .fav-btn-wrap .stButton button:hover {
-    background: #fff8e1 !important;
-    color: #e65100 !important;
-    border: 2px solid #f9a825 !important;
-    transform: translateY(-2px);
+  background-color: #ffffff;
+  padding: 20px 30px;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
+  text-align: center; margin-top: 25px;
+  height: 450px !important;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  overflow: hidden; position: relative; z-index: 1;
+  width: 100%; box-sizing: border-box;
 }
 
 /* Typo interne */
-.mode-indicator {
-    position: absolute; top: 30px; left: 0; right: 0;
-    font-size: 16px; text-transform: uppercase; letter-spacing: 1.5px;
-    color: #adb5bd; font-weight: 700;
-}
+.mode-indicator { position: absolute; top: 30px; left: 0; right: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1.5px; color: #adb5bd; font-weight: 700; }
 .content-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
 .huge-char { font-size: 130px; line-height: 1.2; color: #2c3e50; font-weight: 900; margin: 0; }
 .huge-pinyin { font-size: 50px; color: #3498db; font-weight: 700; margin: 5px 0; }
 .huge-fr { font-size: 35px; color: #505c6e; font-weight: 600; margin: 5px 0; }
 
-.answer-container {
-    background-color: #f8f9fa; border-radius: 16px; padding: 10px 25px;
-    margin-top: 15px; min-width: 60%;
-    animation: fadeIn 0.3s ease-in;
-}
+.answer-container { background-color: #f8f9fa; border-radius: 16px; padding: 10px 25px; margin-top: 15px; min-width: 60%; animation: fadeIn 0.3s ease-in; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Boutons génériques */
 .main .stButton button {
-    width: 100%;
-    border: none !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+  width: 100%; border: none !important; transition: all 0.2s ease !important;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08); text-transform: uppercase; letter-spacing: 1px;
 }
 .main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
 .main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
 
-/* Bouton Révéler (pleine largeur, collé à la carte) */
+/* Révéler (pleine largeur, collé) */
 .main div:not([data-testid="column"]) .stButton button {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
-    color: white !important;
-    border-radius: 0 0 24px 24px !important;
-    margin-top: -24px !important;
-    width: 100% !important;
-
-    height: 200px !important;
-    font-size: 56px !important;
-    font-weight: 900 !important;
-    z-index: 0;
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+  color: white !important; border-radius: 0 0 24px 24px !important;
+  margin-top: -24px !important; width: 100% !important; height: 200px !important;
+  font-size: 56px !important; font-weight: 900 !important; z-index: 0;
 }
 .main div:not([data-testid="column"]) .stButton button:hover { filter: brightness(1.03); }
 
-/* Rangée des choix (pleine largeur, petit écart central) */
+/* Rangée des choix */
 .choice-row { width: 100%; box-sizing: border-box; }
 .choice-row [data-testid="column"] { padding-left: 0 !important; padding-right: 0 !important; }
 .choice-row [data-testid="column"]:first-of-type { padding-right: 6px !important; }
 .choice-row [data-testid="column"]:last-of-type  { padding-left: 6px !important; }
-
 .choice-row .stButton button {
-    border-radius: 18px !important;
-    height: 130px !important;
-    font-size: 30px !important;
-    font-weight: 850 !important;
-    margin-top: 22px;
-    border: 3px solid transparent !important;
+  border-radius: 18px !important; height: 130px !important; font-size: 30px !important; font-weight: 850 !important;
+  margin-top: 22px; border: 3px solid transparent !important;
 }
-
-/* À revoir — rouge par défaut / hover blanc + outline rouge */
 .choice-row [data-testid="column"]:nth-of-type(1) .stButton button {
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-    color: #ffffff !important;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; color: #ffffff !important;
 }
 .choice-row [data-testid="column"]:nth-of-type(1) .stButton button:hover {
-    background: #ffffff !important;
-    color: #c0392b !important;
-    border: 3px solid #c0392b !important;
+  background: #ffffff !important; color: #c0392b !important; border: 3px solid #c0392b !important;
 }
-
-/* Mémorisé — vert par défaut / hover blanc + outline vert */
 .choice-row [data-testid="column"]:nth-of-type(2) .stButton button {
-    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
-    color: #ffffff !important;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important; color: #ffffff !important;
 }
 .choice-row [data-testid="column"]:nth-of-type(2) .stButton button:hover {
-    background: #ffffff !important;
-    color: #27ae60 !important;
-    border: 3px solid #27ae60 !important;
+  background: #ffffff !important; color: #27ae60 !important; border: 3px solid #27ae60 !important;
 }
+
+/* --- ÉTOILE FAV EN HAUT-DROITE DE LA CARTE ---
+   Technique: on insère une rangée (fav-row) juste après la carte,
+   superposée grâce à une marge négative et alignée à droite */
+.fav-row { margin-top: -430px; /* superpose ~hauteur carte */ width: 100%; position: relative; z-index: 4; }
+.fav-row [data-testid="column"] { padding: 0 !important; }
+.fav-row .stButton button {
+  background: #ffd54f !important; color: #8d6e63 !important;
+  border-radius: 22px !important; height: 42px !important; font-size: 16px !important; font-weight: 800 !important;
+  padding: 6px 14px !important; border: 2px solid #ffca28 !important; box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+.fav-row .stButton button:hover { background: #fff8e1 !important; color: #e65100 !important; border: 2px solid #f9a825 !important; transform: translateY(-2px); }
 </style>
 """, unsafe_allow_html=True)
 
-# --- DONNÉES COMPLÈTES ---
+# --- DATA ---
 if 'all_data' not in st.session_state:
     st.session_state.all_data = {
         "1-10": [
@@ -297,12 +235,10 @@ if 'all_data' not in st.session_state:
         ]
     }
 
-GAME_MODES = {
-    1: "Pinyin → FR", 2: "FR → Pinyin", 3: "FR -> Symbole",
-    4: "Symbole → FR", 5: "Pinyin -> Symbole", 6: "Symbole → Pinyin"
-}
+GAME_MODES = { 1: "Pinyin → FR", 2: "FR → Pinyin", 3: "FR -> Symbole",
+               4: "Symbole → FR", 5: "Pinyin -> Symbole", 6: "Symbole → Pinyin" }
 
-# --- ÉTAT ---
+# --- STATE ---
 if 'deck' not in st.session_state: st.session_state.deck = []
 if 'current_card' not in st.session_state: st.session_state.current_card = None
 if 'revealed' not in st.session_state: st.session_state.revealed = False
@@ -310,18 +246,19 @@ if 'game_active' not in st.session_state: st.session_state.game_active = False
 if 'total_cards_initial' not in st.session_state: st.session_state.total_cards_initial = 0
 if 'favorites' not in st.session_state: st.session_state.favorites = []
 if 'use_favorites_only' not in st.session_state: st.session_state.use_favorites_only = False
+if '_toast_restored_shown' not in st.session_state: st.session_state._toast_restored_shown = False
 
-# Charger auto favoris & session (si présents)
+# silent load at startup (no toast spam)
 load_favorites_from_disk()
-load_session_from_disk()
+load_session_from_disk(show_toast=False)
 
-# Init checkboxes
+# init checkboxes
 for k in st.session_state.all_data.keys():
     if f"chk_serie_{k}" not in st.session_state: st.session_state[f"chk_serie_{k}"] = True
 for k in GAME_MODES.keys():
     if f"chk_mode_{k}" not in st.session_state: st.session_state[f"chk_mode_{k}"] = True
 
-# --- LOGIQUE ---
+# --- LOGIC ---
 def toggle_all_series(state: bool):
     for k in st.session_state.all_data.keys():
         st.session_state[f"chk_serie_{k}"] = state
@@ -335,29 +272,17 @@ def is_current_favorite() -> bool:
     (char, pinyin, fr), _ = st.session_state.current_card
     return any(f["char"] == char and f["pinyin"] == pinyin and f["fr"] == fr for f in st.session_state.favorites)
 
-def add_current_to_favorites():
-    if st.session_state.current_card is None: return
-    (char, pinyin, fr), _ = st.session_state.current_card
-    entry = {"char": char, "pinyin": pinyin, "fr": fr}
-    if not is_current_favorite():
-        st.session_state.favorites.append(entry)
-        save_favorites_to_disk()
-        st.toast("⭐ Ajouté aux favoris", icon="⭐")
-    else:
-        st.toast("Déjà présent dans les favoris", icon="⚠️")
-
-def remove_current_from_favorites():
-    if st.session_state.current_card is None: return
-    (char, pinyin, fr), _ = st.session_state.current_card
-    st.session_state.favorites = [f for f in st.session_state.favorites if not (f["char"] == char and f["pinyin"] == pinyin and f["fr"] == fr)]
-    save_favorites_to_disk()
-    st.toast("🗑️ Retiré des favoris", icon="🗑️")
-
 def toggle_favorite():
+    if st.session_state.current_card is None: return
+    (char, pinyin, fr), _ = st.session_state.current_card
     if is_current_favorite():
-        remove_current_from_favorites()
+        st.session_state.favorites = [f for f in st.session_state.favorites
+                                      if not (f["char"] == char and f["pinyin"] == pinyin and f["fr"] == fr)]
+        st.toast("🗑️ Retiré des favoris", icon="🗑️")
     else:
-        add_current_to_favorites()
+        st.session_state.favorites.append({"char": char, "pinyin": pinyin, "fr": fr})
+        st.toast("⭐ Ajouté aux favoris", icon="⭐")
+    save_favorites_to_disk()
 
 def start_game():
     deck = []
@@ -402,8 +327,7 @@ def next_card():
     save_session_to_disk()
 
 def mark_memorized():
-    if st.session_state.deck:
-        st.session_state.deck.pop(0)
+    if st.session_state.deck: st.session_state.deck.pop(0)
     next_card()
 
 def mark_review():
@@ -412,7 +336,7 @@ def mark_review():
         st.session_state.deck.append(card)
     next_card()
 
-# ================= INTERFACE =================
+# --- SIDEBAR ---
 with st.sidebar:
     st.header("🎴 Configuration")
     st.subheader("Source du deck")
@@ -451,15 +375,9 @@ with st.sidebar:
                     rerun()
         else:
             st.caption("Aucun favori pour l'instant.")
-
-    # Export/Import favoris
-    st.download_button(
-        "⬇️ Télécharger favoris.json",
-        data=json.dumps(st.session_state.favorites, ensure_ascii=False, indent=2),
-        file_name="favoris.json",
-        mime="application/json",
-        use_container_width=True
-    )
+    st.download_button("⬇️ Télécharger favoris.json",
+                       data=json.dumps(st.session_state.favorites, ensure_ascii=False, indent=2),
+                       file_name="favoris.json", mime="application/json", use_container_width=True)
     up_fav = st.file_uploader("📥 Importer favoris.json", type=["json"], key="uploader_favs")
     if up_fav is not None:
         try:
@@ -475,30 +393,26 @@ with st.sidebar:
 
     st.markdown("---")
     st.subheader("💾 Sauvegarde globale de la session")
-    # Sauvegarde/Restaurations manuelles
     cols_s = st.columns(2)
     if cols_s[0].button("💾 Sauvegarder la session (manuel)", use_container_width=True):
         save_session_to_disk()
         st.success("Session sauvegardée dans session.json.")
     if cols_s[1].button("↩️ Restaurer la dernière session (manuel)", use_container_width=True):
-        load_session_from_disk()
+        # toast seulement ici (manuel), une seule fois
+        st.session_state._toast_restored_shown = False
+        load_session_from_disk(show_toast=True)
         rerun()
 
-    # Export/Import session
-    st.download_button(
-        "⬇️ Télécharger session.json",
-        data=SESSION_FILE.read_text(encoding="utf-8") if SESSION_FILE.exists() else json.dumps({}, indent=2),
-        file_name="session.json",
-        mime="application/json",
-        use_container_width=True
-    )
+    st.download_button("⬇️ Télécharger session.json",
+                       data=SESSION_FILE.read_text(encoding="utf-8") if SESSION_FILE.exists() else json.dumps({}, indent=2),
+                       file_name="session.json", mime="application/json", use_container_width=True)
     up_sess = st.file_uploader("📥 Importer session.json", type=["json"], key="uploader_session")
     if up_sess is not None:
         try:
             imported = json.loads(up_sess.read().decode("utf-8"))
-            # remplace et recharge
             SESSION_FILE.write_text(json.dumps(imported, ensure_ascii=False, indent=2), encoding="utf-8")
-            load_session_from_disk()
+            st.session_state._toast_restored_shown = False
+            load_session_from_disk(show_toast=True)
             st.success("Session importée et restaurée.")
             rerun()
         except Exception as e:
@@ -509,7 +423,7 @@ with st.sidebar:
         start_game()
         rerun()
 
-# --- ZONE PRINCIPALE ---
+# --- MAIN ---
 if not st.session_state.game_active:
     st.markdown("""
         <div style='text-align: center; padding: 50px; color: #6c757d;'>
@@ -538,16 +452,14 @@ if st.session_state.current_card is None:
 (char, pinyin, fr) = item
 mode_text = GAME_MODES[mode]
 
-# Barre de progression
+# Progression
 total = st.session_state.total_cards_initial
 restant = len(st.session_state.deck)
 progress_val = (total - restant) / total if total > 0 else 0
 st.progress(progress_val)
 st.caption(f"Progression : {total - restant} / {total}")
 
-# --- HTML du contenu ---
-q_html, a_html = "", ""
-
+# HTML contenu
 def format_answer(top, bottom=None):
     html = f'<div class="answer-container"><div class="{top[1]}">{top[0]}</div>'
     if bottom:
@@ -574,11 +486,8 @@ elif mode == 6:  # Symbole → Pinyin
     q_html = f'<div class="huge-char">{char}</div>'
     a_html = format_answer((pinyin, "huge-pinyin"), (fr, "huge-fr"))
 
-# ================= AFFICHAGE =================
+# --- AFFICHAGE ---
 with st.container():
-    # Conteneur positionné
-    st.markdown('<div class="card-wrap">', unsafe_allow_html=True)
-
     # Carte
     st.markdown(f"""
 <div class="flashcard-content">
@@ -590,38 +499,34 @@ with st.container():
 </div>
 """, unsafe_allow_html=True)
 
-    # Bouton étoile — placé DANS le conteneur card-wrap pour être en haut droite de la carte
-    st.markdown('<div class="fav-btn-wrap">', unsafe_allow_html=True)
-    fav_label = "⭐ Ajouter aux favoris" if not is_current_favorite() else "★ Retirer des favoris"
-    if st.button(fav_label, key="btn_fav"):
-        toggle_favorite()
-        save_session_to_disk()
-        rerun()
+    # ⭐ Rangée superposée: bouton en haut-droite de la carte
+    st.markdown('<div class="fav-row">', unsafe_allow_html=True)
+    left, right = st.columns([8, 1])
+    with right:
+        fav_label = "⭐ Ajouter aux favoris" if not is_current_favorite() else "★ Retirer des favoris"
+        if st.button(fav_label, key="btn_fav", help="Ajouter/retirer des favoris"):
+            toggle_favorite()
+            save_session_to_disk()
+            rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Fermeture du wrapper
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Bouton Révéler
+    # Boutons d’action
     if not st.session_state.revealed:
         if st.button("👁️ Révéler la réponse", key="btn_reveal", use_container_width=True):
             st.session_state.revealed = True
             save_session_to_disk()
             rerun()
     else:
-        # Deux choix
-        choice_wrap = st.container()
-        with choice_wrap:
-            st.markdown('<div class="choice-row">', unsafe_allow_html=True)
-            c_ko, c_ok = st.columns(2, gap="small")
-            with c_ko:
-                if st.button("❌ À revoir", key="btn_ko", use_container_width=True):
-                    mark_review()
-                    save_session_to_disk()
-                    rerun()
-            with c_ok:
-                if st.button("✅ Mémorisé", key="btn_ok", use_container_width=True):
-                    mark_memorized()
-                    save_session_to_disk()
-                    rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="choice-row">', unsafe_allow_html=True)
+        c_ko, c_ok = st.columns(2, gap="small")
+        with c_ko:
+            if st.button("❌ À revoir", key="btn_ko", use_container_width=True):
+                mark_review()
+                save_session_to_disk()
+                rerun()
+        with c_ok:
+            if st.button("✅ Mémorisé", key="btn_ok", use_container_width=True):
+                mark_memorized()
+                save_session_to_disk()
+                rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
