@@ -2,119 +2,163 @@ import streamlit as st
 import random
 
 # --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="Radicaux Chinois", layout="wide")
+st.set_page_config(page_title="Radicaux Chinois", layout="wide", initial_sidebar_state="expanded")
 
 # --- FONCTION COMPATIBLE RERUN ---
 def rerun():
     try:
         st.rerun()
     except AttributeError:
-        # Fallback pour anciennes versions de Streamlit
         st.experimental_rerun()
 
-# --- CSS ULTRA-LARGE POUR TABLETTE & AMÉLIORATIONS DE LAYOUT ---
+# ==============================================================================
+# --- NOUVEAU CSS MODERNE ---
+# ==============================================================================
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-    html, body, [class*="css"] { font-family: 'Roboto', sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap');
+    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
 
-    /* === STYLE DE LA CARTE CENTRALE (La bulle) === */
-    .stCard {
-        background-color: #ffffff;
-        padding: 30px; /* Espace intérieur */
-        border-radius: 18px; /* Coins arrondis */
-        box-shadow: 0 10px 40px rgba(20,20,30,0.08);
-        text-align: center;
-        margin: 20px auto;
-        max-width: 920px; /* Largeur max de la bulle */
-        border: 1px solid #f0f2f6;
+    /* --- 1. FOND GÉNÉRAL ET CONTAINERS --- */
+    .stApp {
+        background-color: #f0f2f5; /* Fond gris doux pour l'app */
     }
 
-    .centered-content {
+    /* Centrer le contenu principal */
+    .main .block-container {
+        max-width: 900px;
+        padding-top: 2rem;
+        padding-bottom: 5rem;
+    }
+
+    /* Réduire l'espace sous la barre de progression */
+    .stProgress > div > div > div {
+        height: 10px !important;
+    }
+    div[data-testid="stCaptionContainer"] {
+        margin-bottom: -20px; /* Remonte le contenu suivant */
+        text-align: center;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    /* --- 2. LA CARTE (CONTENU TEXTE) --- */
+    .flashcard-content {
+        background-color: #ffffff;
+        padding: 40px 30px;
+        border-radius: 24px 24px 0 0; /* Arrondi en haut seulement */
+        box-shadow: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
+        text-align: center;
+        margin-top: 25px;
+        border-bottom: 2px solid #f0f2f5;
+        min-height: 300px; /* Hauteur minimale pour la stabilité */
         display: flex;
         flex-direction: column;
-        align-items: center;
         justify-content: center;
-        width: 100%;
+        align-items: center;
     }
 
-    /* Centrage explicite du caractère/pinyin (question) */
-    .huge-char, .huge-pinyin {
-        display: block;
-        margin: 8px auto;
-        text-align: center;
-        line-height: 1.05;
+    /* --- 3. TYPOGRAPHIE DE LA CARTE --- */
+    .mode-indicator {
+        font-size: 18px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #adb5bd;
+        font-weight: 700;
+        margin-bottom: 30px;
     }
 
-    /* Taille et style des éléments */
-    .huge-char { 
-        font-size: 140px; 
-        color: #1E88E5; 
-        font-weight: 900; 
+    .huge-char {
+        font-size: 150px;
+        line-height: 1.2;
+        color: #2c3e50;
+        font-weight: 900;
+        margin: 10px 0;
     }
-    .huge-pinyin { 
-        font-size: 70px; 
-        color: #1565C0; 
-        font-weight: 700; 
+    .huge-pinyin {
+        font-size: 60px;
+        color: #3498db;
+        font-weight: 700;
+        margin: 5px 0;
     }
-
-    .question-mode {
-        font-size: 22px;
-        color: #868e96;
-        margin-bottom: 20px;
+    .huge-fr {
+        font-size: 45px;
+        color: #505c6e;
         font-weight: 600;
-        width: 100%;
-        text-align: left;
+         margin: 5px 0;
     }
 
-    .answer-text { 
-        font-size: 40px; 
-        color: #333; 
-        background-color: #eef2f7; 
-        padding: 28px; 
-        border-radius: 14px; 
-        margin: 20px 0;
-        font-weight: 500;
+    /* --- 4. ZONE RÉPONSE (Grisée) --- */
+    .answer-container {
+        background-color: #f8f9fa;
+        border-radius: 16px;
+        padding: 20px;
+        margin-top: 30px;
         width: 100%;
+        animation: fadeIn 0.3s ease-in;
     }
+    @keyframes fadeIn { font-from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* === BOUTONS : uniformisation et taille adaptative === */
-    .stCard .stButton > button {
-        width: 100% !important; /* prennent la largeur du conteneur (colonne) */
-        border-radius: 12px !important;
-        height: 78px !important;
-        font-size: 22px !important;
-        font-weight: 700 !important;
+
+    /* ========================================================================
+       --- 5. STYLISATION DES BOUTONS STREAMLIT ---
+       C'est la partie cruciale pour corriger l'aspect des boutons.
+    ======================================================================== */
+
+    /* Style de base pour TOUS les boutons dans la zone principale */
+    .main .stButton button {
+        width: 100%;
+        border-radius: 0 0 24px 24px !important; /* Arrondi en bas pour coller à la carte */
+        height: 90px !important;
+        font-size: 24px !important;
+        font-weight: 800 !important;
         border: none !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Effet au survol et clic */
+    .main .stButton button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
+    .main .stButton button:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
+
+    /* --- COULEURS SPÉCIFIQUES --- */
+
+    /* Bouton RÉVÉLER (Bleu) */
+    /* On cible le bouton unique quand il n'y a pas de colonnes */
+    .main div:not([data-testid="column"]) > .stButton button {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
         color: white !important;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-        transition: transform 0.08s ease, filter 0.12s ease;
+        border-radius: 0 0 24px 24px !important;
+        margin-top: -5px; /* Coller à la carte */
     }
-    .stCard .stButton > button:active { transform: translateY(1px) scale(0.998); }
 
-    /* Reveal (le bouton en single column au milieu de la bulle) */
-    .reveal-wrapper { width: 72%; margin: 22px auto 8px auto; }
-    .reveal-wrapper .stButton > button { background-color: #1976D2 !important; height:86px !important; font-size:24px !important; }
-
-    /* Row d'actions : colonnes côte à côte occupant toute la largeur de la bulle */
-    .action-row > div { padding: 0 8px; } /* léger espacement entre colonnes */
-    .action-row .stButton > button { height:86px !important; font-size:20px !important; }
-
-    /* Couleurs remplies pour les 2 boutons d'action (gauche = rouge, droite = vert) */
-    /* On cible la structure générée par st.columns lorsqu'elle est à l'intérieur de .action-row */
-    .action-row > div:nth-child(1) .stButton > button { background-color: #D32F2F !important; }
-    .action-row > div:nth-child(2) .stButton > button { background-color: #388E3C !important; }
-
-    /* Ajustement des checkboxes pour la tablette */
-    .stCheckbox label { font-size: 20px !important; padding: 10px 0; }
-
-    /* Responsive: réduire un peu les tailles sur petits écrans */
-    @media (max-width: 800px) {
-        .huge-char { font-size: 90px; }
-        .huge-pinyin { font-size: 36px; }
-        .reveal-wrapper { width: 92%; }
+    /* Boutons de VALIDATION (quand révélé) */
+    /* On cible les boutons à l'intérieur des colonnes */
+    .main div[data-testid="column"] .stButton button {
+         border-radius: 16px !important; /* Arrondi complet quand ils sont séparés */
+         height: 100px !important;
+         font-size: 26px !important;
+         margin-top: 20px; /* Espace entre la carte et les boutons de choix */
     }
+
+    /* Bouton "À REVOIR" (Colonne de gauche -> Rouge) */
+    div[data-testid="column"]:nth-of-type(1) .stButton button {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+        color: white !important;
+    }
+
+    /* Bouton "MÉMORISÉ" (Colonne de droite -> Vert) */
+    div[data-testid="column"]:nth-of-type(2) .stButton button {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
+        color: white !important;
+    }
+
+    /* Ajustement Sidebar */
+    .css-1d391kg { background-color: #ffffff; }
+    .st-emotion-cache-16txtl3 { padding: 2rem 1rem; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -258,19 +302,20 @@ def mark_review():
 
 # ================= INTERFACE =================
 
-# --- SIDEBAR ---
+# --- SIDEBAR (Inchangée dans la logique, juste un peu de style via CSS) ---
 with st.sidebar:
-    st.header("1. SÉRIES")
+    st.header("🎴 Configuration")
+    st.subheader("1. Séries")
     c1, c2 = st.columns(2)
-    c1.button("✅ Tous", key="all_s", on_click=toggle_all_series, args=(True,))
-    c2.button("❌ Aucun", key="no_s", on_click=toggle_all_series, args=(False,))
+    c1.button("✅ Toutes", key="all_s", on_click=toggle_all_series, args=(True,))
+    c2.button("❌ Aucune", key="no_s", on_click=toggle_all_series, args=(False,))
     
     sorted_keys = sorted(list(st.session_state.all_data.keys()), key=lambda x: int(x.split('-')[0]))
     for key in sorted_keys:
         st.checkbox(f"Série {key}", key=f"chk_serie_{key}")
 
     st.markdown("---")
-    st.header("2. MODES")
+    st.subheader("2. Modes de jeu")
     c3, c4 = st.columns(2)
     c3.button("✅ Tous", key="all_m", on_click=toggle_all_modes, args=(True,))
     c4.button("❌ Aucun", key="no_m", on_click=toggle_all_modes, args=(False,))
@@ -279,19 +324,31 @@ with st.sidebar:
         st.checkbox(m_name, key=f"chk_mode_{m_id}")
 
     st.markdown("---")
-    if st.button("🚀 LANCER LE JEU"):
+    # Bouton de lancement (style par défaut de sidebar, c'est ok)
+    if st.button("🚀 LANCER UNE SESSION", type="primary", use_container_width=True):
         start_game()
         rerun()
 
 # --- ZONE PRINCIPALE ---
 if not st.session_state.game_active:
-    st.info("👈 Configure et lance le jeu depuis la barre latérale.")
+    st.markdown("""
+        <div style='text-align: center; padding: 50px; color: #6c757d;'>
+            <h1>👋 Bienvenue !</h1>
+            <p style='font-size: 1.2rem;'>Configure tes séries et tes modes dans la barre latérale,<br>puis clique sur "Lancer une session" pour commencer.</p>
+        </div>
+    """, unsafe_allow_html=True)
     st.stop()
 
 if st.session_state.current_card is None:
     st.balloons()
-    st.success("🎉 Session terminée ! 🎉")
-    if st.button("Recommencer"):
+    st.markdown("""
+        <div style='text-align: center; padding: 50px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);'>
+            <h1 style='color: #2ecc71; font-size: 3rem;'>Session terminée ! 🎉</h1>
+            <p style='font-size: 1.5rem; color: #6c757d;'>Beau travail.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    st.write("")
+    if st.button("Recommencer une session", type="primary", use_container_width=True):
         st.session_state.game_active = False
         rerun()
     st.stop()
@@ -300,67 +357,75 @@ item, mode = st.session_state.current_card
 char, pinyin, fr = item
 mode_text = GAME_MODES[mode]
 
-# Barre de progression
+# Barre de progression (Style ajusté via CSS)
 total = st.session_state.total_cards_initial
 restant = len(st.session_state.deck)
-st.progress((total - restant) / total if total > 0 else 0)
-st.caption(f"Progression : {total - restant}/{total}")
+progress_val = (total - restant) / total if total > 0 else 0
+st.progress(progress_val)
+st.caption(f"Progression : {total - restant} / {total}")
 
-# --- CARTE PRINCIPALE (LA BULLE) ---
-# On ouvre la bulle ici et on la garde ouverte pour inclure les boutons (permet un alignement parfait)
-st.markdown('<div class="stCard"><div class="centered-content">', unsafe_allow_html=True)
-st.markdown(f'<div class="question-mode">{mode_text}</div>', unsafe_allow_html=True)
-
-# Contenu HTML (Question/Réponse)
+# --- PRÉPARATION DU CONTENU HTML ---
 q_html = ""
 a_html = ""
-# Logique d'affichage (taille HUGE)
-if mode == 1: # Pinyin -> FR
-    q_html = f'<span class="huge-pinyin">{pinyin}</span>'
-    a_html = f'{fr}<br><span class="huge-char">{char}</span>'
-elif mode == 2: # FR -> Pinyin
-    q_html = f'<span class="huge-pinyin" style="font-size:50px; color:#333">{fr}</span>'
-    a_html = f'{pinyin}<br><span class="huge-char">{char}</span>'
+
+# Helper pour formater la réponse
+def format_answer(top, bottom=None):
+    html = f'<div class="answer-container"><div class="{top[1]}">{top[0]}</div>'
+    if bottom:
+        html += f'<div class="{bottom[1]}">{bottom[0]}</div>'
+    html += '</div>'
+    return html
+
+if mode == 1: # Pinyin → FR
+    q_html = f'<div class="huge-pinyin">{pinyin}</div>'
+    a_html = format_answer((char, "huge-char"), (fr, "huge-fr"))
+elif mode == 2: # FR → Pinyin
+    q_html = f'<div class="huge-fr" style="font-size: 50px;">{fr}</div>'
+    a_html = format_answer((char, "huge-char"), (pinyin, "huge-pinyin"))
 elif mode == 3: # FR -> Symbole
-    q_html = f'<span class="huge-pinyin" style="font-size:50px; color:#333">{fr}</span>'
-    a_html = f'<span class="huge-char">{char}</span><br>{pinyin}'
-elif mode == 4: # Symbole -> FR
-    q_html = f'<span class="huge-char">{char}</span>'
-    a_html = f'{fr}<br>{pinyin}'
+    q_html = f'<div class="huge-fr" style="font-size: 50px;">{fr}</div>'
+    a_html = format_answer((char, "huge-char"), (pinyin, "huge-pinyin"))
+elif mode == 4: # Symbole → FR
+    q_html = f'<div class="huge-char">{char}</div>'
+    a_html = format_answer((pinyin, "huge-pinyin"), (fr, "huge-fr"))
 elif mode == 5: # Pinyin -> Symbole
-    q_html = f'<span class="huge-pinyin">{pinyin}</span>'
-    a_html = f'<span class="huge-char">{char}</span><br>{fr}'
-elif mode == 6: # Symbole -> Pinyin
-    q_html = f'<span class="huge-char">{char}</span>'
-    a_html = f'{pinyin}<br>{fr}'
+    q_html = f'<div class="huge-pinyin">{pinyin}</div>'
+    a_html = format_answer((char, "huge-char"), (fr, "huge-fr"))
+elif mode == 6: # Symbole → Pinyin
+    q_html = f'<div class="huge-char">{char}</div>'
+    a_html = format_answer((pinyin, "huge-pinyin"), (fr, "huge-fr"))
 
-# AFFICHER LA QUESTION (Centrée dans la bulle)
-st.markdown(q_html, unsafe_allow_html=True)
 
-# --- ZONE ACTIONS DANS LA BULLE ---
-if not st.session_state.revealed:
-    # Bouton RÉVÉLER : on le place à l'intérieur d'une wrapper pour contrôler sa largeur (égale à la bulle)
-    st.markdown('<div class="reveal-wrapper">', unsafe_allow_html=True)
-    if st.button("👁️ RÉVÉLER"):
-        st.session_state.revealed = True
-        rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-else:
-    # AFFICHER LA RÉPONSE (toujours dans la bulle)
-    st.markdown(f'<div class="answer-text">{a_html}</div>', unsafe_allow_html=True)
-    
-    # Boutons Validation (Côte à côte, occupent la largeur de la bulle)
-    st.markdown('<div class="action-row" style="width:100%; margin-top:8px;">', unsafe_allow_html=True)
-    c_ko, c_ok = st.columns(2)
-    with c_ko:
-        if st.button("❌ À REVOIR", key="btn_ko"):
-            mark_review()
+# ================= AFFICHAGE DE LA CARTE =================
+# On utilise st.container pour grouper visuellement, mais on ne met PAS
+# les boutons Streamlit DANS le HTML personnalisé de la carte.
+
+with st.container():
+    # 1. Le haut de la carte (indicateur de mode + question)
+    st.markdown(f"""
+        <div class="flashcard-content">
+            <div class="mode-indicator">{mode_text}</div>
+            {q_html}
+            {a_html if st.session_state.revealed else ""}
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 2. Zone des boutons d'action (en dehors du HTML de la carte, géré par Streamlit + CSS)
+    if not st.session_state.revealed:
+        # Un seul gros bouton qui prend toute la largeur
+        if st.button("👁️ Révéler la réponse", key="btn_reveal"):
+            st.session_state.revealed = True
             rerun()
-    with c_ok:
-        if st.button("✅ MÉMORISÉ", key="btn_ok"):
-            mark_memorized()
-            rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# Fermer la bulle
-st.markdown('</div></div>', unsafe_allow_html=True)
+    else:
+        # Deux gros boutons côte à côte
+        c_ko, c_ok = st.columns(2, gap="medium")
+        with c_ko:
+            # Le CSS cible ce bouton car il est dans la 1ère colonne
+            if st.button("❌ À revoir", key="btn_ko"):
+                mark_review()
+                rerun()
+        with c_ok:
+            # Le CSS cible ce bouton car il est dans la 2ème colonne
+            if st.button("✅ Mémorisé", key="btn_ok"):
+                mark_memorized()
+                rerun()
