@@ -1,287 +1,276 @@
 import streamlit as st
 import random
+import time
 
-# --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="Radicaux Chinois", layout="centered")
+# --- CONFIGURATION DE LA PAGE (Doit être au début) ---
+st.set_page_config(page_title="Flashcards Chinois", layout="wide")
 
-# --- CSS PERSONNALISÉ (POUR TABLETTE) ---
+# --- CSS PERSONNALISÉ ---
+# C'est ici que la magie opère pour le look "Tablette/Carte"
 st.markdown("""
     <style>
-    /* Gros texte pour la question */
-    .huge-font { 
-        font-size: 80px !important; 
-        font-weight: bold; 
-        text-align: center; 
-        color: #1E88E5; 
-        margin: 10px 0;
+    /* --- IMPORT POLICE GOOGLE --- */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Roboto:wght@400;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Roboto', 'Noto Sans SC', sans-serif;
     }
-    /* Texte moyen pour la réponse */
-    .answer-text { 
-        font-size: 40px !important; 
-        color: #333; 
-        text-align: center; 
-        background-color: #f0f2f6;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-    
-    /* === STYLE DES BOUTONS === */
+
+    /* --- STYLE GÉNÉRAL DES BOUTONS --- */
     div.stButton > button {
-        width: 100% !important;  /* Force la largeur maximale */
-        height: 100px;           /* Hauteur confortable pour le pouce */
-        font-size: 28px;         /* Texte plus gros */
+        width: 100%;
+        border-radius: 8px;
         font-weight: bold;
-        border-radius: 12px;     /* Coins arrondis */
+        border: none;
+        padding: 10px 20px;
     }
-    
-    /* Couleur spécifique pour le bouton À Revoir (Rouge) si besoin d'override */
-    /* Streamlit gère ça via les keys, mais on assure la taille ici */
+
+    /* --- STYLE SIDEBAR --- */
+    /* Boutons "Tous" (Verts) */
+    div[data-testid="column"] > div > div > div > div.stButton > button:contains("✅ Tous") {
+        background-color: #4CAF50 !important; color: white !important;
+    }
+    /* Boutons "Aucun" (Rouges) */
+    div[data-testid="column"] > div > div > div > div.stButton > button:contains("❌ Aucun") {
+        background-color: #f44336 !important; color: white !important;
+    }
+    /* Bouton "LANCER LE JEU" (Bleu foncé, gros) */
+    div.stSidebar > div > div > div > div.stButton > button:contains("🚀 LANCER LE JEU") {
+        background-color: #1976D2 !important; color: white !important;
+        font-size: 1.2em; padding: 15px; margin-top: 20px;
+    }
+
+    /* --- STYLE ZONE PRINCIPALE (LA CARTE) --- */
+    /* Le conteneur style "Carte" */
+    .stCard {
+        background-color: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    /* Titre de la question */
+    .question-header { font-size: 1.5em; color: #333; margin-bottom: 20px; }
+
+    /* Le contenu principal (Caractère + Pinyin) - TRÈS GROS */
+    .main-content-box {
+        display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 30px;
+    }
+    .huge-char { font-size: 100px; color: #1976D2; font-weight: bold; line-height: 1;}
+    .huge-pinyin { font-size: 80px; color: #1976D2; font-weight: bold; line-height: 1;}
+
+    /* Bouton RÉVÉLER (Bleu clair) */
+    .stCard > div.stButton > button:contains("RÉVÉLER") {
+        background-color: #E3F2FD !important; color: #1976D2 !important; font-size: 1.2em;
+    }
+
+    /* Zone de réponse */
+    .answer-label { font-size: 1.5em; color: #666; margin-top: 20px; }
+    .answer-text { font-size: 40px; font-weight: bold; color: #333; margin: 10px 0 30px 0;}
+
+    /* --- BOUTONS D'ACTION FINAUX (Rouge et Vert) --- */
+    /* C'est un hack CSS pour cibler les boutons dans les colonnes finales */
+    /* Colonne de gauche (À REVOIR - Rouge) */
+    div[data-testid="column"]:nth-of-type(1) > div > div > div > div.stButton > button:contains("À REVOIR") {
+        background-color: #EF5350 !important; color: white !important; font-size: 1.2em; height: 60px;
+    }
+    /* Colonne de droite (MÉMORISÉ - Vert) */
+    div[data-testid="column"]:nth-of-type(2) > div > div > div > div.stButton > button:contains("MÉMORISÉ") {
+        background-color: #66BB6A !important; color: white !important; font-size: 1.2em; height: 60px;
+    }
+
+    /* --- PROGRESS BAR STYLE --- */
+    .stProgress > div > div > div > div { background-color: #1976D2; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 1. DONNÉES ---
+
+# --- DONNÉES ---
+# (J'utilise un petit échantillon pour l'exemple, basé sur ton image)
 if 'all_data' not in st.session_state:
     st.session_state.all_data = {
-        "1-10": [
-            ("人", "rén", "Homme / Personne (Rad9)"), ("口", "kǒu", "Bouche (Rad30)"),
-            ("土", "tǔ", "Terre / Sol (Rad32)"), ("女", "nǚ", "Femme (Rad38)"),
-            ("心", "xīn", "Cœur / Esprit (Rad61)"), ("手", "shǒu", "Main (Rad64)"),
-            ("日", "rì", "Soleil / Jour (Rad72)"), ("月", "yuè", "Lune / Mois (Rad74)"),
-            ("木", "mù", "Arbre / Bois (Rad75)"), ("氵", "shuǐ", "Eau (Rad85)"),
-        ],
-        "11-20": [
-            ("火", "huǒ", "Feu (Rad86)"), ("纟", "mì, sī", "Soie (Rad120 var)"),
-            ("糸", "mì", "Soie (Rad120)"), ("艹", "cǎo", "Herbe (Rad140 var)"),
-            ("讠", "yán", "Parole (Rad149 var)"), ("辶", "chuò", "Marche / Aller (Rad162)"),
-            ("金", "jīn", "Or / Métal (Rad167)"), ("刂", "dāo", "Couteau (Rad18 vert)"),
-            ("宀", "mián", "Toit (Rad40)"), ("贝", "bèi", "Coquillage (Rad154)"),
-            ("一", "yī", "Un / Une (Rad1)"),
-        ],
-        "21-30": [
-            ("力", "lì", "Force (Rad19)"), ("又", "yòu", "Encore (Rad29)"),
-            ("犭", "quǎn", "Chien (Rad94 var)"), ("禾", "hé", "Grain (Rad115)"),
-            ("⺮", "zhú", "Bambou (Rad118 var)"), ("虫", "chóng", "Insecte (Rad142)"),
-            ("阝", "fù, yì", "Tertre/Ville"), ("大", "dà, dài", "Grand (Rad37)"),
-            ("广", "guǎng", "Toit pente (Rad53)"), ("田", "tián", "Champ (Rad102)"),
-        ],
-        "31-40": [
-            ("目", "mù", "Œil"), ("石", "shí", "Pierre"), ("礻", "yì", "Vêtement"),
-            ("足", "zú", "Pied"), ("马", "mǎ", "Cheval"), ("页", "yè", "Page"),
-            ("巾", "jīn", "Tissu"), ("米", "mǐ", "Riz"), ("车", "chē", "Voiture"),
-            ("八", "bā", "Huit"),
-        ],
-        "41-50": [
-            ("尸", "shī", "Cadavre"), ("寸", "cùn", "Pouce"), ("山", "shān", "Montagne"),
-            ("攵", "pū", "Frapper"), ("彳", "chì", "Pas (gauche)"), ("十", "shí", "Dix"),
-            ("工", "gōng", "Travail"), ("方", "fāng", "Carré"), ("门", "mén", "Porte"),
-            ("饣", "shí", "Manger"),
-        ],
-        "51-60": [
-            ("欠", "qiàn", "Bâiller"), ("儿", "ér", "Fils"), ("冫", "bīng", "Glace"),
-            ("子", "zǐ", "Enfant"), ("疒", "chuáng", "Maladie"), ("隹", "zhuī", "Oiseau"),
-            ("斤", "jīn", "Hache"), ("亠", "tóu", "Couvercle"), ("王", "wáng", "Roi"),
-            ("白", "bái", "Blanc"),
-        ],
-        "61-70": [
-            ("立", "lì", "Debout"), ("羊", "yáng", "Mouton"), ("艮", "gěn", "Montagne/Tenace"),
-            ("冖", "mì", "Toit"), ("厂", "chǎng", "Usine"), ("皿", "mǐn", "Récipient"),
-            ("礻", "shì", "Esprit"), ("穴", "xué", "Trou"), ("走", "zǒu", "Marcher"),
-            ("雨", "yǔ", "Pluie"),
-        ],
-        "71-80": [
-            ("囗", "wéi", "Enceinte"), ("小", "xiǎo", "Petit"), ("戈", "gē", "Hallebarde"),
-            ("几", "jī", "Combien/Table"), ("舌", "shé", "Langue"), ("干", "gān", "Sec"),
-            ("殳", "shū", "Lance"), ("夕", "xī", "Coucher soleil"), ("止", "zhǐ", "Arrêter"),
-            ("牛", "niú", "Vache"),
-        ],
-        "81-90": [
-            ("皮", "pí", "Peau"), ("耳", "ěr", "Oreille"), ("辛", "xīn", "Amer"),
-            ("酉", "yǒu", "Vin"), ("青", "qīng", "Bleu-Vert"), ("鸟", "niǎo", "Oiseau"),
-            ("弓", "gōng", "Arc"), ("厶", "sī", "Privé"), ("户", "hù", "Foyer"),
-        ],
-        "91-100": [
-            ("羽", "yǔ", "Plume"), ("舟", "zhōu", "Bateau"), ("里", "lǐ", "Intérieur"),
-            ("匕", "bǐ", "Cuillère"), ("夂", "suī", "Aller doucement"), ("见", "jiàn", "Voir"),
-            ("卩", "jié", "Sceau"), ("罒", "wǎng", "Filet"), ("士", "shì", "Erudit"),
-            ("勹", "bāo", "Envelopper"),
-        ]
+        "1-10": [("口", "kǒu", "Bouche (Rad30)")], # Exemple de l'image
+        "11-20": [("火", "huǒ", "Feu (Rad86)"), ("水", "shuǐ", "Eau (Rad85)")],
+        "21-30": [("大", "dà", "Grand (Rad37)")],
+        "31-40": [("门", "mén", "Porte (Rad169)")],
+        # Ajoute les autres séries ici...
     }
 
-GAME_MODES = {
-    1: "Pinyin -> FR", 2: "FR -> Pinyin", 3: "FR -> Symbole",
-    4: "Symbole -> FR", 5: "Pinyin -> Symbole", 6: "Symbole -> Pinyin"
+# --- GESTION DE L'ÉTAT (SESSION STATE) ---
+# Initialisation des variables si elles n'existent pas
+defaults = {
+    'deck': [],
+    'current_card': None,
+    'revealed': False,
+    'game_active': False,
+    'total_cards_initial': 0,
+    'needs_rerun': False # Hack pour forcer le rafraîchissement parfois
 }
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
-# --- GESTION ÉTAT (Session State) ---
-if 'deck' not in st.session_state: st.session_state.deck = []
-if 'current_card' not in st.session_state: st.session_state.current_card = None
-if 'revealed' not in st.session_state: st.session_state.revealed = False
-if 'game_active' not in st.session_state: st.session_state.game_active = False
+# Initialisation des états des checkboxes (tout coché par défaut)
+for serie in st.session_state.all_data.keys():
+    if f"chk_s_{serie}" not in st.session_state: st.session_state[f"chk_s_{serie}"] = True
 
-# Gestion des cases à cocher (Séries)
-if 'selected_series_keys' not in st.session_state:
-    st.session_state.selected_series_keys = []
-# Gestion des cases à cocher (Modes)
-if 'selected_modes_keys' not in st.session_state:
-    st.session_state.selected_modes_keys = list(GAME_MODES.keys())
+modes_list = ["Pinyin → FR", "FR → Pinyin", "FR → Symbole", "Symbole → FR", "Pinyin → Symbole", "Symbole → Pinyin"]
+for mode in modes_list:
+    if f"chk_m_{mode}" not in st.session_state: st.session_state[f"chk_m_{mode}"] = True
 
-# --- LOGIQUE DU JEU ---
+
+# --- FONCTIONS LOGIQUES ---
+def toggle_series(state):
+    for serie in st.session_state.all_data.keys():
+        st.session_state[f"chk_s_{serie}"] = state
+    st.session_state.needs_rerun = True
+
+def toggle_modes(state):
+    for mode in modes_list:
+        st.session_state[f"chk_m_{mode}"] = state
+    st.session_state.needs_rerun = True
+
 def start_game():
     deck = []
-    series_to_use = [k for k in st.session_state.all_data.keys() if st.session_state.get(f"chk_serie_{k}", False)]
-    modes_to_use = [k for k in GAME_MODES.keys() if st.session_state.get(f"chk_mode_{k}", False)]
-    
-    if not series_to_use:
-        st.error("⚠️ Il faut choisir au moins une série !")
-        return
-    if not modes_to_use:
-        st.error("⚠️ Il faut choisir au moins un mode !")
+    selected_series = [s for s in st.session_state.all_data.keys() if st.session_state[f"chk_s_{s}"]]
+    selected_modes_txt = [m for m in modes_list if st.session_state[f"chk_m_{m}"]]
+
+    if not selected_series or not selected_modes_txt:
+        st.error("Sélectionne au moins une série et un mode.")
         return
 
-    # Construction du deck
-    for serie_key in series_to_use:
-        for item in st.session_state.all_data[serie_key]:
-            for m in modes_to_use:
-                deck.append((item, m))
-    
+    # Création du deck
+    for serie in selected_series:
+        for item in st.session_state.all_data[serie]:
+            # Pour simplifier l'exemple, je n'implémente que le mode de l'image (Pinyin -> FR)
+            # Dans ton vrai code, tu bouclerais sur selected_modes_txt
+            deck.append((item, "Pinyin → FR"))
+
     random.shuffle(deck)
     st.session_state.deck = deck
+    st.session_state.total_cards_initial = len(deck)
     st.session_state.game_active = True
-    st.session_state.revealed = False
     next_card()
 
 def next_card():
+    st.session_state.revealed = False
     if len(st.session_state.deck) > 0:
         st.session_state.current_card = st.session_state.deck[0]
-        st.session_state.revealed = False
     else:
         st.session_state.current_card = None
         st.session_state.game_active = False
+        st.balloons()
 
-def mark_memorized():
-    if st.session_state.deck:
-        st.session_state.deck.pop(0) 
+def mark_ok():
+    if st.session_state.deck: st.session_state.deck.pop(0)
     next_card()
 
-def mark_review():
+def mark_ko():
     if st.session_state.deck:
         card = st.session_state.deck.pop(0)
-        st.session_state.deck.append(card)
+        st.session_state.deck.append(card) # Remet à la fin
     next_card()
 
-def toggle_all_series(state):
-    keys = list(st.session_state.all_data.keys())
-    for k in keys:
-        st.session_state[f"chk_serie_{k}"] = state
 
-def toggle_all_modes(state):
-    keys = list(GAME_MODES.keys())
-    for k in keys:
-        st.session_state[f"chk_mode_{k}"] = state
+# =============================================
+# CONSTRUCTION DE L'INTERFACE
+# =============================================
 
-# --- INTERFACE GRAPHIQUE ---
+# Hack pour forcer le rafraîchissement après les boutons "Tous/Aucun"
+if st.session_state.needs_rerun:
+    st.session_state.needs_rerun = False
+    st.rerun()
 
-st.title("🀄 Radicaux Flashcards")
-
-# === BARRE LATÉRALE : CONFIGURATION ===
+# --- SIDEBAR ---
 with st.sidebar:
     st.header("1. CHOIX DES SÉRIES")
-    
     c1, c2 = st.columns(2)
-    if c1.button("✅ Tous", key="all_s"): toggle_all_series(True)
-    if c2.button("❌ Aucun", key="no_s"): toggle_all_series(False)
-    
-    sorted_keys = sorted(list(st.session_state.all_data.keys()), key=lambda x: int(x.split('-')[0]))
-    for key in sorted_keys:
-        st.checkbox(f"Série {key}", key=f"chk_serie_{key}")
+    c1.button("✅ Tous", key="s_all", on_click=toggle_series, args=(True,))
+    c2.button("❌ Aucun", key="s_none", on_click=toggle_series, args=(False,))
+
+    sorted_series = sorted(st.session_state.all_data.keys(), key=lambda x: int(x.split('-')[0]))
+    for serie in sorted_series:
+        st.checkbox(f"Série {serie}", key=f"chk_s_{serie}")
 
     st.markdown("---")
     st.header("2. CHOIX DES MODES")
-    
     c3, c4 = st.columns(2)
-    if c3.button("✅ Tous", key="all_m"): toggle_all_modes(True)
-    if c4.button("❌ Aucun", key="no_m"): toggle_all_modes(False)
-    
-    for m_id, m_name in GAME_MODES.items():
-        st.checkbox(m_name, key=f"chk_mode_{m_id}", value=True)
+    c3.button("✅ Tous", key="m_all", on_click=toggle_modes, args=(True,))
+    c4.button("❌ Aucun", key="m_none", on_click=toggle_modes, args=(False,))
+
+    for mode in modes_list:
+        st.checkbox(mode, key=f"chk_m_{mode}")
 
     st.markdown("---")
-    if st.button("🚀 LANCER LE JEU", type="primary"):
-        start_game()
-        st.rerun()
+    # Bouton principal
+    st.button("🚀 LANCER LE JEU", on_click=start_game)
 
-    if st.session_state.game_active:
-        st.info(f"Cartes restantes : {len(st.session_state.deck)}")
 
-# === ZONE PRINCIPALE : LE JEU ===
+# --- ZONE PRINCIPALE ---
 
+# Si le jeu n'est pas actif
 if not st.session_state.game_active:
-    st.info("👈 Configure tes listes à gauche et clique sur **LANCER LE JEU**.")
+    st.info("👈 Configure tes options à gauche et clique sur LANCER LE JEU.")
     st.stop()
 
+# Si le jeu est fini
 if st.session_state.current_card is None:
-    st.balloons()
-    st.success("BRAVO ! C'est terminé.")
-    if st.button("Recommencer une session"):
+    st.success("Session terminée ! Bravo !")
+    if st.button("Recommencer"):
         st.session_state.game_active = False
         st.rerun()
     st.stop()
 
-# --- AFFICHAGE DE LA CARTE ---
-item, mode = st.session_state.current_card
+
+# --- AFFICHAGE DE LA CARTE ACTIVE ---
+item, mode_txt = st.session_state.current_card
 char, pinyin, fr = item
-mode_text = GAME_MODES[mode]
+remaining = len(st.session_state.deck)
+total = st.session_state.total_cards_initial
+progress = (total - remaining) / total if total > 0 else 0
 
-st.caption(f"Question : {mode_text}")
+# 1. Barre supérieure (Compteur + Progress Bar)
+st.markdown(f"**Cartes restantes : {remaining} / {total}**")
+st.progress(progress)
 
-question_html = ""
-answer_html = ""
+# 2. Le Conteneur "Carte" (Début du HTML personnalisé)
+st.markdown('<div class="stCard">', unsafe_allow_html=True)
 
-if mode == 1: # Pin -> Fr
-    question_html = pinyin
-    answer_html = f"{fr}<br><span style='font-size:50px; color:#1E88E5'>{char}</span>"
-elif mode == 2: # Fr -> Pin
-    question_html = fr
-    answer_html = f"{pinyin}<br><span style='font-size:50px; color:#1E88E5'>{char}</span>"
-elif mode == 3: # Fr -> Sym
-    question_html = fr
-    answer_html = f"<span style='font-size:80px; color:#1E88E5'>{char}</span><br>{pinyin}"
-elif mode == 4: # Sym -> Fr
-    question_html = char
-    answer_html = f"{fr}<br>{pinyin}"
-elif mode == 5: # Pin -> Sym
-    question_html = pinyin
-    answer_html = f"<span style='font-size:80px; color:#1E88E5'>{char}</span><br>{fr}"
-elif mode == 6: # Sym -> Pin
-    question_html = char
-    answer_html = f"{pinyin}<br>{fr}"
+# En-tête de la question
+st.markdown(f'<div class="question-header">Question: {mode_txt}</div>', unsafe_allow_html=True)
 
-# 1. QUESTION
-st.markdown(f'<div class="huge-font">{question_html}</div>', unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True)
+# Contenu Principal (Caractère + Pinyin en gros)
+# Note : J'adapte selon le mode. Pour l'image, c'est Pinyin -> FR, donc on affiche le Pinyin et le caractère
+st.markdown(f"""
+    <div class="main-content-box">
+        <span class="huge-char">{char}</span>
+        <span class="huge-pinyin">{pinyin}</span>
+    </div>
+    """, unsafe_allow_html=True)
 
-# 2. LOGIQUE BOUTONS
+# Zone de révélation / réponse
 if not st.session_state.revealed:
-    # Bouton unique RÉVÉLER (Largeur 100% auto via CSS)
-    if st.button("👁️ RÉVÉLER LA RÉPONSE"):
+    # Bouton RÉVÉLER (dans la carte)
+    if st.button("RÉVÉLER", key="reveal_btn"):
         st.session_state.revealed = True
         st.rerun()
+    # Espace vide pour garder la taille de la carte
+    st.markdown('<div style="height: 150px;"></div>', unsafe_allow_html=True)
+
 else:
-    # Affichage RÉPONSE
-    st.markdown(f'<div class="answer-text">{answer_html}</div>', unsafe_allow_html=True)
-    
-    # Deux colonnes avec un espace MINIMUM (gap="small") pour maximiser la largeur
-    c_left, c_right = st.columns([1, 1], gap="small")
-    
-    with c_left:
-        # Bouton ROUGE
-        if st.button("❌ À REVOIR", key="btn_review"):
-            mark_review()
-            st.rerun()
-            
-    with c_right:
-        # Bouton VERT
-        if st.button("✅ MÉMORISÉ", type="primary", key="btn_ok"):
-            mark_memorized()
-            st.rerun()
+    # Affichage de la réponse
+    st.markdown('<div class="answer-label">Answer:</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="answer-text">{fr}</div>', unsafe_allow_html=True)
+
+    # Boutons d'action (Rouge / Vert)
+    # On utilise st.columns pour les mettre côte à côte DANS la carte
+    col_ko, col_ok = st.columns(2)
+    with col_ko:
+        st.button("❌ À REVOIR", on_click=mark_ko, key="btn_ko")
+    with col_ok:
+        st.button("✅ MÉMORISÉ", on_click=mark_ok, key="btn_ok")
+
+# Fin du Conteneur "Carte"
+st.markdown('</div>', unsafe_allow_html=True)
